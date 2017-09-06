@@ -13,47 +13,99 @@ def scenario_base(data):
     return data
 
 
+def scenario_co2_25(data):
+    # change CO2 price
+    co = data['commodity']
+    co2_only = (co.index.get_level_values('Commodity') == 'CO2')
+    co.loc[co2_only, 'price'] = 25
+    return data
+	
+
+def scenario_co2_50(data):
+    # change CO2 price
+    co = data['commodity']
+    co2_only = (co.index.get_level_values('Commodity') == 'CO2')
+    co.loc[co2_only, 'price'] = 50
+    return data
+	
+	
+def scenario_co2_75(data):
+    # change CO2 price
+    co = data['commodity']
+    co2_only = (co.index.get_level_values('Commodity') == 'CO2')
+    co.loc[co2_only, 'price'] = 75
+    return data
+	
+	
+def scenario_co2_100(data):
+    # change CO2 price
+    co = data['commodity']
+    co2_only = (co.index.get_level_values('Commodity') == 'CO2')
+    co.loc[co2_only, 'price'] = 100
+    return data
+	
+def scenario_cheaper_bat_and_pv(data):
+    # change investment and fix costs
+    sto = data['storage']
+    batteries_only = (sto.index.get_level_values('Storage') == 'Li-ion battery')
+    sto.loc[batteries_only, 'inv-cost-c'] *= 0.5
+    sto.loc[batteries_only, 'fix-cost-c'] *= 0.5
+    pro = data['process']
+    photovoltaics_only = (pro.index.get_level_values('Process').map(lambda x: x.startswith('Solar')))
+    pro.loc[photovoltaics_only, 'inv-cost'] *= 0.5
+    pro.loc[photovoltaics_only, 'fix-cost'] *= 0.5
+    return data
+	
+	
+def scenario_hydrogen(data):
+    # change investment and fix costs
+    pro = data['process']
+    electrolysis_only = (pro.index.get_level_values('Process') == 'Electrolysis')
+    pro.loc[electrolysis_only, 'inv-cost'] *= 0.5
+    pro.loc[electrolysis_only, 'fix-cost'] *= 0.5
+    fc_only = (pro.index.get_level_values('Process') == 'Fuel cell')
+    pro.loc[fc_only, 'inv-cost'] *= 0.5
+    pro.loc[fc_only, 'fix-cost'] *= 0.5
+    return data
+	
+
+def scenario_process_caps(data):
+    # change maximum installable capacity
+    pro = data['process']
+    photovoltaics_only = (pro.index.get_level_values('Process') == 'Photovoltaics')
+    pro.loc[photovoltaics_only, 'cap-up'] = [max(20, pro.loc[i, 'inst-cap']*1.5) for i in pro.loc[photovoltaics_only].index]
+    onshore_wind_only = (pro.index.get_level_values('Process') == 'Onshore wind park')
+    pro.loc[onshore_wind_only, 'cap-up'] = [max(10, pro.loc[i, 'inst-cap']*1.25) for i in pro.loc[onshore_wind_only].index]
+    return data
+
+
+def scenario_for_pv(data):
+    # combine three scenarios
+    data = scenario_co2_100(data)
+    data = scenario_cheaper_bat_and_pv(data)
+    data = scenario_no_wind(data)
+    return data
+	
+	
+def scenario_for_wind(data):
+    # combine three scenarios
+    data = scenario_co2_100(data)
+    data = scenario_hydrogen(data)
+    data = scenario_no_pv(data)
+    return data
+	
+
 def scenario_stock_prices(data):
     # change stock commodity prices
     co = data['commodity']
     stock_commodities_only = (co.index.get_level_values('Type') == 'Stock')
     co.loc[stock_commodities_only, 'price'] *= 1.5
     return data
-
-
-def scenario_co2_limit(data):
-    # change global CO2 limit
-    glob = data['global']
-    glob.loc['CO2 limit', 'value'] *= 0.05
-    return data
-
-
-def scenario_co2_tax_mid(data):
-    # change CO2 price in Mid
-    co = data['commodity']
-    co.loc[('Mid', 'CO2', 'Env'), 'price'] = 50
-    return data
-
-
-def scenario_north_process_caps(data):
-    # change maximum installable capacity
-    pro = data['process']
-    pro.loc[('North', 'Hydro plant'), 'cap-up'] *= 0.5
-    pro.loc[('North', 'Biomass plant'), 'cap-up'] *= 0.25
-    return data
-
-
+	
+	
 def scenario_no_dsm(data):
     # empty the DSM dataframe completely
     data['dsm'] = pd.DataFrame()
-    return data
-
-
-def scenario_all_together(data):
-    # combine all other scenarios
-    data = scenario_stock_prices(data)
-    data = scenario_co2_limit(data)
-    data = scenario_north_process_caps(data)
     return data
 
 
@@ -120,7 +172,7 @@ def run_scenario(input_file, timesteps, scenario, result_dir,
     log_filename = os.path.join(result_dir, '{}.log').format(sce)
 
     # solve model and read results
-    optim = SolverFactory('glpk')  # cplex, glpk, gurobi, ...
+    optim = SolverFactory('gurobi')  # cplex, glpk, gurobi, ...
     optim = setup_solver(optim, logfile=log_filename)
     result = optim.solve(prob, tee=True)
 
@@ -128,7 +180,7 @@ def run_scenario(input_file, timesteps, scenario, result_dir,
     shutil.copyfile(input_file, os.path.join(result_dir, input_file))
     
     # save problem solution (and input data) to HDF5 file
-    urbs.save(prob, os.path.join(result_dir, '{}.h5'.format(sce)))
+    #urbs.save(prob, os.path.join(result_dir, '{}.h5'.format(sce)))
 
     # write report to spreadsheet
     urbs.report(
@@ -147,25 +199,52 @@ def run_scenario(input_file, timesteps, scenario, result_dir,
     return prob
 
 if __name__ == '__main__':
-    input_file = 'mimo-example.xlsx'
+    input_file = 'CA_v05.5j_2016.xlsx'
     result_name = os.path.splitext(input_file)[0]  # cut away file extension
     result_dir = prepare_result_directory(result_name)  # name + time stamp
 
     # simulation timesteps
-    (offset, length) = (3500, 168) # time step selection
+    (offset, length) = (0, 8760) # time step selection
     timesteps = range(offset, offset+length+1)
 
     # plotting commodities/sites
-    plot_tuples = [
-        ('North', 'Elec'),
-        ('Mid', 'Elec'),
-        ('South', 'Elec'),
-        (['North', 'Mid', 'South'], 'Elec')]
+    plot_tuples = []
+        #('LAA', 'Elec'),
+        #('SCA', 'Elec'),
+        #('SWB', 'Elec'),
+        #('NCA', 'Elec')]
 
     # detailed reporting commodity/sites
     report_tuples = [
-        ('North', 'Elec'), ('Mid', 'Elec'), ('South', 'Elec'),
-        ('North', 'CO2'), ('Mid', 'CO2'), ('South', 'CO2')]
+        ('CCT', 'Elec'),
+        ('CVA', 'Elec'),
+        ('ECA', 'Elec'),
+        ('ELU', 'Elec'),
+        ('FRE', 'Elec'),
+        ('LAX', 'Elec'),
+        ('NCT', 'Elec'),
+        ('NVA', 'Elec'),
+        ('PAC', 'Elec'),
+        ('SDG', 'Elec'),
+        ('MX', 'Elec'),
+        ('NE', 'Elec'),
+        ('NW', 'Elec'), 
+        ('SW', 'Elec'),
+        #('CCT', 'CO2'),
+        #('CVA', 'CO2'),
+        #('ECA', 'CO2'),
+        #('ELU', 'CO2'),
+        #('FRE', 'CO2'),
+        #('LAX', 'CO2'),
+        #('NCT', 'CO2'),
+        #('NVA', 'CO2'),
+        #('PAC', 'CO2'),
+        #('SDG', 'CO2'),
+        #('MX', 'CO2'),
+        #('NE', 'CO2'),
+        #('NW', 'CO2'), 
+        #('SW', 'CO2'),
+        ]
 
     # plotting timesteps
     plot_periods = {
@@ -183,12 +262,13 @@ if __name__ == '__main__':
     # select scenarios to be run
     scenarios = [
         scenario_base,
-        scenario_stock_prices,
-        scenario_co2_limit,
-        scenario_co2_tax_mid,
-        scenario_no_dsm,
-        scenario_north_process_caps,
-        scenario_all_together]
+        #scenario_stock_prices,
+        #scenario_co2_limit,
+        #scenario_co2_tax_mid,
+        #scenario_no_dsm,
+        #scenario_north_process_caps,
+        #scenario_all_together
+        ]
 
     for scenario in scenarios:
         prob = run_scenario(input_file, timesteps, scenario, result_dir,

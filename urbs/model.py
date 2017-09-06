@@ -582,9 +582,26 @@ def create_model(data, timesteps=None, dt=1, dual=False):
         rule=res_dsm_recovery_rule,
         doc='DSMup(t, t + recovery time R) <= Cup * delay time L')
 
+    # global constraints
     m.res_global_co2_limit = pyomo.Constraint(
             rule=res_global_co2_limit_rule,
             doc='total co2 commodity output <= Global CO2 limit')
+			
+	m.res_rps_requirements = pyomo.Constraint(
+            rule=res_rps_rule,
+            doc='total generation from eligible renewables >= RPS * overall demand')
+			
+	m.battery_pge = pyomo.Constraint(
+            rule=res_battery_PGE_rule,
+            doc='total storage capacity (power) in PGE >= hacks.battery PGE')
+			
+	m.battery_sce = pyomo.Constraint(
+            rule=res_battery_SCE_rule,
+            doc='total storage capacity (power) in SCE >= hacks.battery SCE')
+			
+	m.battery_sdg = pyomo.Constraint(
+            rule=res_battery_SDG_rule,
+            doc='total storage capacity (power) in SDG >= hacks.battery SDG')
 
     if dual:
         m.dual = pyomo.Suffix(direction=pyomo.Suffix.IMPORT)
@@ -1045,6 +1062,75 @@ def res_global_co2_limit_rule(m):
         # scaling to annual output (cf. definition of m.weight)
         co2_output_sum *= m.weight
         return (co2_output_sum <= m.global_prop.loc['CO2 limit', 'value'])
+    else:
+        return pyomo.Constraint.Skip
+
+# define a minimum share of renewable generation rps (renewable portfolio standard)
+def res_rps_rule(m):
+    try:
+        rps=m.global_prop.loc['RPS', 'Value']
+    except KeyError:
+        rps = 0
+	
+	# only add constraint if limit is larger 0
+    if rps > 0:
+        ren_output_sum = 0
+        demand_sum = 0
+        for tm in m.tm:
+            for sit in m.sit:
+                demand_sum += (m.demand.loc[tm][sit, 'Elec'])
+                for pro in ['Photovoltaic Plant','Onshore Wind Plant','Small Hydro Plant','Geothermal Plant','Biomass Plant']:
+                    ren_output_sum += (m.e_pro_out[tm, sit, pro, 'Elec'])
+        return (ren_output_sum >= rps * demand_sum)
+    else:
+        return pyomo.Constraint.Skip
+
+# define battery minimum capacities
+def res_battery_PGE_rule(m):
+    try:
+        pge=m.global_prop.loc['battery PGE', 'Value']
+    except KeyError:
+        pge = 0
+	
+	# only add constraint if limit is larger 0
+    if pge > 0:
+	    batteryPGE_capacity = 0
+        for sit in ['NVA','NCT','CVA','FRE','CCT']:
+            for sto in ['Li-ion battery']:
+                batteryPGE_capacity += m.cap_sto_p[sit, sto, 'Elec']
+        return (batteryPGE_capacity >= pge)
+    else:
+        return pyomo.Constraint.Skip
+
+def res_battery_SCE_rule(m):
+    try:
+        sce=m.global_prop.loc['battery SCE', 'Value']
+    except KeyError:
+        sce = 0
+	
+	# only add constraint if limit is larger 0
+    if sce > 0:
+	    batterySCE_capacity = 0
+        for sit in ['LAX','ECA','ELU']:
+            for sto in ['Li-ion battery']:
+                batterySCE_capacity += m.cap_sto_p[sit, sto, 'Elec']
+        return (batterySCE_capacity >= sce)
+    else:
+        return pyomo.Constraint.Skip
+		
+def res_battery_SDG_rule(m):
+    try:
+        sdg=m.global_prop.loc['battery SDG', 'Value']
+    except KeyError:
+        sdg = 0
+	
+	# only add constraint if limit is larger 0
+    if sdg > 0:
+	    batterySDG_capacity = 0
+        for sit in ['SDG']:
+            for sto in ['Li-ion battery']:
+                batterySDG_capacity += m.cap_sto_p[sit, sto, 'Elec']
+        return (batterySDG_capacity >= sdg)
     else:
         return pyomo.Constraint.Skip
 
