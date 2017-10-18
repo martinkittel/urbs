@@ -240,11 +240,13 @@ def create_model(data, timesteps=None, dt=1, dual=False):
     # commodity type subsets
     m.com_supim = pyomo.Set(
         within=m.com,
-        initialize=commodity_subset(m.com_tuples, 'SupIm')|commodity_subset(m.com_tuples, 'RenSupIm'),
+        initialize=[commodity_subset(m.com_tuples, 'SupIm') |
+                    commodity_subset(m.com_tuples, 'RenSupIm')],
         doc='Commodities that have intermittent (timeseries) input')
     m.com_stock = pyomo.Set(
         within=m.com,
-        initialize=commodity_subset(m.com_tuples, 'Stock')|commodity_subset(m.com_tuples, 'RenStock'),
+        initialize=[commodity_subset(m.com_tuples, 'Stock') |
+                    commodity_subset(m.com_tuples, 'RenStock')],
         doc='Commodities that can be purchased at some site(s)')
     m.com_sell = pyomo.Set(
         within=m.com,
@@ -264,9 +266,10 @@ def create_model(data, timesteps=None, dt=1, dual=False):
         doc='Commodities that (might) have a maximum creation limit')
     m.com_ren = pyomo.Set(
         within=m.com,
-        initialize=commodity_subset(m.com_tuples, 'RenStock')|commodity_subset(m.com_tuples, 'RenSupIm'),
+        initialize=[commodity_subset(m.com_tuples, 'RenStock') |
+                    commodity_subset(m.com_tuples, 'RenSupIm')],
         doc='Commodities that are renewable')
-		
+
     # renewable processes
     m.pro_ren_tuples = pyomo.Set(
         within=m.sit*m.pro,
@@ -274,7 +277,7 @@ def create_model(data, timesteps=None, dt=1, dual=False):
                     for (site, process) in m.pro_tuples
                     for (pro, commodity) in m.r_in.index
                     if process == pro and commodity in m.com_ren],
-        doc='Renewable processes within a site and their consumed commodities, e.g. (Mid,PV,Solar)')
+        doc='Renewable processes within a site, e.g. (Mid,PV)')
 
     # Parameters
 
@@ -621,10 +624,10 @@ def create_model(data, timesteps=None, dt=1, dual=False):
     m.res_global_co2_limit = pyomo.Constraint(
             rule=res_global_co2_limit_rule,
             doc='total co2 commodity output <= Global CO2 limit')
-			
+
     m.res_ren_quota_requirements = pyomo.Constraint(
             rule=res_ren_quota_rule,
-            doc='total generation from eligible renewables >= quota * overall demand')
+            doc='total renewable generation >= quota * overall demand')
 
     if dual:
         m.dual = pyomo.Suffix(direction=pyomo.Suffix.IMPORT)
@@ -1101,15 +1104,15 @@ def res_global_co2_limit_rule(m):
     else:
         return pyomo.Constraint.Skip
 
-		
+
 # define a minimum share of renewable generation (renewable quota)
 def res_ren_quota_rule(m):
     try:
-        quota=m.global_prop.loc['Renewable quota', 'value']
+        quota = m.global_prop.loc['Renewable quota', 'value']
     except KeyError:
         quota = 0
-	
-	# only add constraint if limit is larger 0
+
+    # only add constraint if limit is larger 0
     if quota > 0:
         ren_output_sum = 0
         demand_sum = 0

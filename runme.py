@@ -191,7 +191,7 @@ if __name__ == '__main__':
         scenario_no_dsm,
         scenario_north_process_caps,
         scenario_all_together
-		]
+        ]
 
     for scenario in scenarios:
         prob = run_scenario(input_file, timesteps, scenario, result_dir,
