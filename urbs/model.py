@@ -240,13 +240,13 @@ def create_model(data, timesteps=None, dt=1, dual=False):
     # commodity type subsets
     m.com_supim = pyomo.Set(
         within=m.com,
-        initialize=[commodity_subset(m.com_tuples, 'SupIm') |
-                    commodity_subset(m.com_tuples, 'RenSupIm')],
+        initialize=(commodity_subset(m.com_tuples, 'SupIm') |
+                    commodity_subset(m.com_tuples, 'RenSupIm')),
         doc='Commodities that have intermittent (timeseries) input')
     m.com_stock = pyomo.Set(
         within=m.com,
-        initialize=[commodity_subset(m.com_tuples, 'Stock') |
-                    commodity_subset(m.com_tuples, 'RenStock')],
+        initialize=(commodity_subset(m.com_tuples, 'Stock') |
+                    commodity_subset(m.com_tuples, 'RenStock')),
         doc='Commodities that can be purchased at some site(s)')
     m.com_sell = pyomo.Set(
         within=m.com,
@@ -254,7 +254,8 @@ def create_model(data, timesteps=None, dt=1, dual=False):
         doc='Commodities that can be sold')
     m.com_buy = pyomo.Set(
         within=m.com,
-        initialize=commodity_subset(m.com_tuples, 'Buy'),
+        initialize=(commodity_subset(m.com_tuples, 'Buy') |
+                    commodity_subset(m.com_tuples, 'RenBuy')),
         doc='Commodities that can be purchased')
     m.com_demand = pyomo.Set(
         within=m.com,
@@ -266,8 +267,9 @@ def create_model(data, timesteps=None, dt=1, dual=False):
         doc='Commodities that (might) have a maximum creation limit')
     m.com_ren = pyomo.Set(
         within=m.com,
-        initialize=[commodity_subset(m.com_tuples, 'RenStock') |
-                    commodity_subset(m.com_tuples, 'RenSupIm')],
+        initialize=(commodity_subset(m.com_tuples, 'RenStock') |
+                    commodity_subset(m.com_tuples, 'RenSupIm') |
+                    commodity_subset(m.com_tuples, 'RenBuy')),
         doc='Commodities that are renewable')
 
     # renewable processes
@@ -625,7 +627,7 @@ def create_model(data, timesteps=None, dt=1, dual=False):
             rule=res_global_co2_limit_rule,
             doc='total co2 commodity output <= Global CO2 limit')
 
-    m.res_ren_quota_requirements = pyomo.Constraint(
+    m.res_ren_quota_requirements = pyomo.ConstraintList(
             rule=res_ren_quota_rule,
             doc='total renewable generation >= quota * overall demand')
 
@@ -1107,25 +1109,39 @@ def res_global_co2_limit_rule(m):
 
 # define a minimum share of renewable generation (renewable quota)
 def res_ren_quota_rule(m):
-    try:
-        quota = m.global_prop.loc['Renewable quota', 'value']
-    except KeyError:
-        quota = 0
+    # Skip if maximum amount of unique constraints is reached
+    if (len(m.res_ren_quota_requirements) >=
+            len(set(m.com_demand | {'overall'}))):
+        return pyomo.ConstraintList.End
+    # identify the quota constraints
+    quota_constraints = m.global_prop.reset_index()
+    quota_constraints = quota_constraints.set_index(['Constraint', 'option'])
+    for comd in set(m.com_demand | {'overall'}):
+        try:
+            quota = quota_constraints.loc[('Renewable quota', comd), 'value']
+        except KeyError:
+            quota = 0
 
-    # only add constraint if limit is larger 0
-    if quota > 0:
-        ren_output_sum = 0
-        demand_sum = 0
-        for tm in m.tm:
-            for sit in m.demand.columns.get_level_values(0):
-                if (sit, 'Elec') in m.demand.columns:
-                    demand_sum += (m.demand.loc[tm][sit, 'Elec'])
-        for tm in m.tm:
-            for (sit, pro) in m.pro_ren_tuples:
-                ren_output_sum += (m.e_pro_out[tm, sit, pro, 'Elec'])
-        return (ren_output_sum >= quota * demand_sum)
-    else:
-        return pyomo.Constraint.Skip
+        # only add constraint if limit is larger than 0
+        if quota > 0:
+            ren_output_sum = 0
+            demand_sum = 0
+            for tm in m.tm:
+                for sit in m.demand.columns.get_level_values(0):
+                    if (sit, comd) in m.demand.columns:
+                        demand_sum += (m.demand.loc[tm][sit, comd])
+            if comd == 'overall':
+                demand_sum = m.demand.loc[m.tm].sum().sum()
+            for tm in m.tm:
+                for (sit, pro) in m.pro_ren_tuples:
+                    if comd == 'overall':
+                        for commodity in m.com_demand:
+                            ren_output_sum += (
+                                (m.e_pro_out[tm, sit, pro, commodity]))
+                    else:
+                        ren_output_sum += (m.e_pro_out[tm, sit, pro, comd])
+            import ipdb;ipdb.set_trace()
+            return (ren_output_sum >= quota * demand_sum)
 
 
 # Objective
