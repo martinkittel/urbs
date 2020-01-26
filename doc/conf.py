@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+import sys, os
+
+sys.path.append(os.path.abspath('..'))
+
 
 import sphinx_rtd_theme
 html_theme = "sphinx_rtd_theme"
@@ -7,6 +11,7 @@ html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 extensions = [
     'sphinx.ext.intersphinx',
     'sphinx.ext.mathjax',
+    'sphinx.ext.autodoc',
 ]
 
 #templates_path = ['_templates']
@@ -14,9 +19,9 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 project = u'urbs'
-copyright = u'2014-2017, tum-ens'
-version = '0.7.1'
-release = '0.7.1'
+copyright = u'2014-2019, tum-ens'
+version = '1.0.0'
+release = '1.0.0'
 
 exclude_patterns = ['_build']
 #pygments_style = 'sphinx'
@@ -72,7 +77,7 @@ texinfo_documents = [
 epub_title = u'urbs'
 epub_author = u'tum-ens'
 epub_publisher = u'tum-ens'
-epub_copyright = u'2014-2017, tum-ens'
+epub_copyright = u'2014-2019, tum-ens'
 
 epub_exclude_files = ['search.html']
 

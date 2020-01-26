@@ -21,15 +21,18 @@ def save(prob, filename):
     """Save urbs model input and result cache to a HDF5 store file.
 
     Args:
-        prob: a urbs model instance containing a solution
-        filename: HDF5 store file to be written
+        - prob: a urbs model instance containing a solution
+        - filename: HDF5 store file to be written
 
     Returns:
         Nothing
     """
     import warnings
+    import tables
     warnings.filterwarnings('ignore',
                             category=pd.io.pytables.PerformanceWarning)
+    warnings.filterwarnings('ignore',
+                            category=tables.NaturalNameWarning)
 
     if not hasattr(prob, '_result'):
         prob._result = create_result_cache(prob)

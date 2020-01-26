@@ -8,9 +8,9 @@
 urbs: A linear optimisation model for distributed energy systems
 ================================================================
 
-:Maintainer: Johannes Dorfner, <johannes.dorfner@tum.de>
+:Author: Johannes Dorfner, <johannes.dorfner@tum.de>
 :Organization: `Chair of Renewable and Sustainable Energy Systems`_,
-               Technical University of Munich
+               Technical University of Munich, <urbs@ens.ei.tum.de>
 :Version: |version|
 :Date: |today|
 :Copyright:
@@ -33,33 +33,40 @@ first running model.
 .. toctree::
    :maxdepth: 1
 
-   overview
-   tutorial
-   workflow
-   
+   Users_guide
+
+Mathematical documentation
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Continue here if you want to understand the theoretical conception of the model
+generator, the logic behind the equations and the structure of the features.
+
+.. toctree::
+   :maxdepth: 1
+
+   theory
+
 Technical documentation
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-Continue here if you want to automate the scripting further, understand the
-model equations or extend the model yourself.
+Continue here if you want to understand in detail the model generator
+implementation.
 
 .. toctree::
    :maxdepth: 1
    
-   report
+   implementation
    api
-   mathdoc
-   buyselldoc
-   dsmdoc
 
 
 Features
 --------
-* `urbs`_ is a linear programming model for multi-commodity energy systems with 
-  a focus on optimal storage sizing and use.
+* `urbs`_ is a linear programming optimization model for multi-commodity energy
+  systems, their sizing, development and utilization.
 * It finds the minimum cost energy system to satisfy given demand timeseries 
-  for possibly multiple commodities (e.g. electricity).
-* By default, operates on hourly-spaced timesteps (configurable).
+  for possibly multiple commodities (e.g. electricity, heat).
+* By default, operates on hourly-spaced timesteps (configurable) and can be 
+  used for intertemporal optimization.
 * Thanks to `pandas`_, complex data analysis code is short and extensible.
 * The model itself is quite small thanks to relying on the `Pyomo`_
   package.
@@ -69,13 +76,28 @@ Features
 Changes
 -------
 
+2019-03-13 Version 1.0
+^^^^^^^^^^^^^^^^^^^^^^
+
+* Maintenance: Modularity (only features which are used are build)
+* Maintenance: New structure of documentation
+* Feature: Time variable efficiency
+* Feature: Objective function can be changed to CO2
+* Feature: Intertemporal feature (expansion between years)
+* Feature: Input validation (having easier to understand error messages due to Excel file)
+* Feature: Reconstruction of partial feature
+* Feature: Global constraints instead of Hacks
+* Bugfixes: Many
+
 2017-01-13 Version 0.7
 ^^^^^^^^^^^^^^^^^^^^^^
 
 * Maintenance: Model file ``urbs.py`` split into subfiles in folder ``urbs``
 * Feature: Usable area in site implemented as possible constraint
-* Feature: Plot function (and ``get_timeseries``) now support grouping of multiple sites
-* Feature: Environmental commodity costs (e.g. emission taxes or other pollution externalities)
+* Feature: Plot function (and ``get_timeseries``) now support grouping of
+  multiple sites
+* Feature: Environmental commodity costs (e.g. emission taxes or other
+  pollution externalities)
 * Bugfix: column *Overproduction* in report sheet did not respect DSM
 
 
@@ -95,11 +117,11 @@ Changes
   Pyomo 4 is advised, as support while be dropped with the next release to
   support new features.
 * New feature: maximal power gradient for conversion processes
-* Documentation: :doc:`buyselldoc` long explanation for `Buy` and `Sell` 
+* Documentation: `buyselldoc` (expired) long explanation for `Buy` and `Sell` 
   commodity types
-* Documentation: :doc:`mathdoc` full listing of sets, parameter, variables,
-  objective function and constraints in mathematical notation and textual
-  expanation
+* Documentation: :doc:`implementation` full listing of sets, parameter,
+  variables, objective function and constraints in mathematical notation and
+  textual explanation
 * Documentation: updated installation notes in `README.md`_
 * Plotting: automatic sorting of time series by variance makes it easier to
   read stacked plots with many technologies  
@@ -113,7 +135,7 @@ Changes
 * Persistence functions `load` and `save`, based on pickle, allow saving
   and retrieving input data and problem instances including results, for later
   re-plotting or re-analysis without having to solve them again.
-* Documenation: :doc:`workflow` tutorial added with example "Newsealand"
+* Documenation: `workflow` tutorial added with example "Newsealand"
 
 2014-12-05 Version 0.3
 ^^^^^^^^^^^^^^^^^^^^^^

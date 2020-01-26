@@ -10,11 +10,15 @@ commodities.
 
 """
 
-from .data import COLORS
+from .colorcodes import COLORS
 from .model import create_model
-from .input import read_excel, get_input
+from .input import *
+from .validation import validate_input
 from .output import get_constants, get_timeseries
 from .plot import plot, result_figures, to_color
 from .pyomoio import get_entity, get_entities, list_entities
 from .report import report
+from .runfunctions import *
 from .saveload import load, save
+from .scenarios import *
+from .identify import identify_mode, identify_expansion
