@@ -13,51 +13,51 @@ global dict_season
 # User preferences
 result_folders = [
     # Short 28 countries 384h 2020-04-15
-    # 'v2.20_2015_base+CO2-20200415T0735',
-    # 'v2.20_2020_base+CO2-20200415T0755',
-    # 'v2.20_2025_base+CO2-20200415T0820',
-    # 'v2.20_2030_base+CO2-20200415T0847',
-    # 'v2.20_2035_base+CO2-20200415T0913',
-    # 'v2.20_2040_base+CO2-20200415T0937',
-    # 'v2.20_2045_base+CO2-20200415T1002',
-    # 'v2.20_2050_base+CO2-20200415T1025',
+    'v2.20_2015_base+CO2-20200415T0735',
+    'v2.20_2020_base+CO2-20200415T0755',
+    'v2.20_2025_base+CO2-20200415T0820',
+    'v2.20_2030_base+CO2-20200415T0847',
+    'v2.20_2035_base+CO2-20200415T0913',
+    'v2.20_2040_base+CO2-20200415T0937',
+    'v2.20_2045_base+CO2-20200415T1002',
+    'v2.20_2050_base+CO2-20200415T1025',
        
-    # 'v2.20_2015_base+NTC-20200415T0746',
-    # 'v2.20_2020_base+NTC-20200415T0801',
-    # 'v2.20_2025_base+NTC-20200415T0821',
-    # 'v2.20_2030_base+NTC-20200415T0842',
-    # 'v2.20_2035_base+NTC-20200415T0902',
-    # 'v2.20_2040_base+NTC-20200415T0921',
-    # 'v2.20_2045_base+NTC-20200415T0940',
-    # 'v2.20_2050_base+NTC-20200415T0958',
+    'v2.20_2015_base+NTC-20200415T0746',
+    'v2.20_2020_base+NTC-20200415T0801',
+    'v2.20_2025_base+NTC-20200415T0821',
+    'v2.20_2030_base+NTC-20200415T0842',
+    'v2.20_2035_base+NTC-20200415T0902',
+    'v2.20_2040_base+NTC-20200415T0921',
+    'v2.20_2045_base+NTC-20200415T0940',
+    'v2.20_2050_base+NTC-20200415T0958',
        
-    # 'v2.20_2015_base-20200415T0725',
-    # 'v2.20_2020_base-20200415T0745',
-    # 'v2.20_2025_base-20200415T0809',
-    # 'v2.20_2030_base-20200415T0835',
-    # 'v2.20_2035_base-20200415T0900',
-    # 'v2.20_2040_base-20200415T0925',
-    # 'v2.20_2045_base-20200415T0949',
-    # 'v2.20_2050_base-20200415T1011',
+    'v2.20_2015_base-20200415T0725',
+    'v2.20_2020_base-20200415T0745',
+    'v2.20_2025_base-20200415T0809',
+    'v2.20_2030_base-20200415T0835',
+    'v2.20_2035_base-20200415T0900',
+    'v2.20_2040_base-20200415T0925',
+    'v2.20_2045_base-20200415T0949',
+    'v2.20_2050_base-20200415T1011',
        
-    # 'v2.20_2015_baseCO2-20200415T0736',
-    # 'v2.20_2020_baseCO2-20200415T0756',
-    # 'v2.20_2025_baseCO2-20200415T0822',
-    # 'v2.20_2030_baseCO2-20200415T0848',
-    # 'v2.20_2035_baseCO2-20200415T0914',
-    # 'v2.20_2040_baseCO2-20200415T0938',
-    # 'v2.20_2045_baseCO2-20200415T1002',
-    # 'v2.20_2050_baseCO2-20200415T1024',
+    'v2.20_2015_baseCO2-20200415T0736',
+    'v2.20_2020_baseCO2-20200415T0756',
+    'v2.20_2025_baseCO2-20200415T0822',
+    'v2.20_2030_baseCO2-20200415T0848',
+    'v2.20_2035_baseCO2-20200415T0914',
+    'v2.20_2040_baseCO2-20200415T0938',
+    'v2.20_2045_baseCO2-20200415T1002',
+    'v2.20_2050_baseCO2-20200415T1024',
     
-    # Long 12 groups 8760h 2020-04-16
-    'v2.20_2015_base-20200416T1858',
-    'v2.20_2020_base-20200416T2044',
-    'v2.20_2025_base-20200417T0401',
-    'v2.20_2030_base-20200417T0658',
-    'v2.20_2035_base-20200420T0444',
-    'v2.20_2040_base-20200420T0813',
-    'v2.20_2045_base-20200420T1411',
-    'v2.20_2050_base-20200420T2100',
+    # # Long 12 groups 8760h 2020-04-16
+    # 'v2.20_2015_base-20200416T1858',
+    # 'v2.20_2020_base-20200416T2044',
+    # 'v2.20_2025_base-20200417T0401',
+    # 'v2.20_2030_base-20200417T0658',
+    # 'v2.20_2035_base-20200420T0444',
+    # 'v2.20_2040_base-20200420T0813',
+    # 'v2.20_2045_base-20200420T1411',
+    # 'v2.20_2050_base-20200420T2100',
 ]
 
 dict_tech = {"Bio_CCS": "Bio-CCS",
@@ -207,11 +207,11 @@ def add_weight(df):
     df_empty = df_empty.reset_index().set_index("t_new")
     
     t = df_empty.index
-    df_empty.loc[(t <= 1416) | (t>=8017), "t"] = (df_empty.index[(t <= 1416) | (t>=8017)]-1)%168+1 # winter
+    df_empty.loc[(t <= 1416) | (t>=8017), "t"] = (df_empty.index[(t <= 1416) | (t>=8017)]-1)%96+1 # winter
     df_empty.loc[0, "t"] = 0
-    df_empty.loc[(t <= 3624) & (t>=1417), "t"] = (df_empty.index[(t <= 3624) & (t>=1417)]-1)%168+169 # Spring
-    df_empty.loc[(t <= 5832) & (t>=3625), "t"] = (df_empty.index[(t <= 5832) & (t>=3625)]-1)%168+337 # Summer
-    df_empty.loc[(t <= 8016) & (t>=5833), "t"] = (df_empty.index[(t <= 8016) & (t>=5833)]-1)%168+505 # Autumn
+    df_empty.loc[(t <= 3624) & (t>=1417), "t"] = (df_empty.index[(t <= 3624) & (t>=1417)]-1)%96+169 # Spring
+    df_empty.loc[(t <= 5832) & (t>=3625), "t"] = (df_empty.index[(t <= 5832) & (t>=3625)]-1)%96+337 # Summer
+    df_empty.loc[(t <= 8016) & (t>=5833), "t"] = (df_empty.index[(t <= 8016) & (t>=5833)]-1)%96+505 # Autumn
     
     weights = df_empty["t"].value_counts().reset_index().rename(columns={"t": "weight"}).rename(columns={"index":"t"})
     weights = weights.set_index("t")
@@ -755,13 +755,14 @@ def get_NTC_rents_data(reader, writer):
         tra_out = df_result["e_tra_out"].droplevel([4,5]).reset_index().rename(columns={"stf": "scenario-year", "sit": "Site", "sit_": "Site Out"}).set_index(["Site", "Site Out", "scenario-year", "t"])
     except KeyError:
         return
-    tra_out = tra_out.reset_index()
-    # tra_out = add_weight(tra_out)
-    # tra_out_regions = tra_out.reset_index()
-    # tra_out_regions["Site"] = [dict_countries[x] for x in tra_out_regions["Site"]]
-    # tra_out_regions["Site Out"] = [dict_countries[x] for x in tra_out_regions["Site Out"]]
-    # tra_out_regions = tra_out_regions.groupby(["t", "Site", "scenario-year", "Site Out"]).sum().reset_index()
-    # tra_out = tra_out.append(tra_out_regions, sort=True, ignore_index=True)
+    # tra_out = tra_out.reset_index()
+    tra_out = add_weight(tra_out)
+    tra_out_regions = tra_out.reset_index()
+    # tra_out_regions = tra_out.copy()
+    tra_out_regions["Site"] = [dict_countries[x] for x in tra_out_regions["Site"]]
+    tra_out_regions["Site Out"] = [dict_countries[x] for x in tra_out_regions["Site Out"]]
+    tra_out_regions = tra_out_regions.groupby(["t", "Site", "scenario-year", "Site Out"]).sum().reset_index()
+    tra_out = tra_out.append(tra_out_regions, sort=True, ignore_index=True)
     
     tra_out = tra_out.set_index(["t", "scenario-year", "Site"]).join(prices_site).rename(columns={0: "price Site"}).reset_index()
     tra_out = tra_out.set_index(["t", "scenario-year", "Site Out"]).join(prices_siteout).rename(columns={0: "price Site Out"}).reset_index()
@@ -1061,59 +1062,59 @@ def get_abatement(reader, writer):
     
     abatement.round(2).reset_index().to_excel(writer, sheet_name='Abatement', index=False)
 
-# # Read in data for all scenarios
-# for folder in result_folders:
-    # version = folder.split("-")[0].split("_")[0]
-    # year = folder.split("-")[0].split("_")[1]
-    # suffix = folder.split("-")[0].split("_")[2]
-    # scen = suffix#.upper()
+# Read in data for all scenarios
+for folder in result_folders:
+    version = folder.split("-")[0].split("_")[0]
+    year = folder.split("-")[0].split("_")[1]
+    suffix = folder.split("-")[0].split("_")[2]
+    scen = suffix#.upper()
     
-    # # Read output file
-    # writer_path = os.path.join("result", "Long 20200406 grouped", "URBS_" + scen + ".xlsx")
-    # book = load_workbook(writer_path)
-    # reader = pd.read_excel(writer_path, sheet_name=None)
-    # writer = pd.ExcelWriter(writer_path, engine='openpyxl') 
-    # writer.book = book
-    # writer.sheets = dict((ws.title, ws) for ws in book.worksheets)
+    # Read output file
+    writer_path = os.path.join("result", "Short 20200406 384h", "URBS_" + scen + ".xlsx")
+    book = load_workbook(writer_path)
+    reader = pd.read_excel(writer_path, sheet_name=None)
+    writer = pd.ExcelWriter(writer_path, engine='openpyxl') 
+    writer.book = book
+    writer.sheets = dict((ws.title, ws) for ws in book.worksheets)
     
-    # # Read in results
-    # urbs_path = os.path.join("result", "Long 20200406 grouped", folder, "scenario_base.h5")
-    # helpdf = urbs.load(urbs_path)
-    # df_result = helpdf._result
-    # df_data = helpdf._data
+    # Read in results
+    urbs_path = os.path.join("result", "Short 20200406 384h", folder, "scenario_base.h5")
+    helpdf = urbs.load(urbs_path)
+    df_result = helpdf._result
+    df_data = helpdf._data
     
-    # print(scen, year, ": Getting CO2 data")
-    # get_emissions_data(reader, writer)
+    print(scen, year, ": Getting CO2 data")
+    get_emissions_data(reader, writer)
     
-    # print(scen, year, ": Getting marginal electricity generation data")
-    # get_marginal_generation_data(reader, writer)
+    print(scen, year, ": Getting marginal electricity generation data")
+    get_marginal_generation_data(reader, writer)
     
-    # print(scen, year, ": Getting electricity prices")
-    # get_electricity_data(reader, writer, int(year))
+    print(scen, year, ": Getting electricity prices")
+    get_electricity_data(reader, writer, int(year))
     
-    # print(scen, year, ": Getting electricity generation data")
-    # get_generation_data(reader, writer)
+    print(scen, year, ": Getting electricity generation data")
+    get_generation_data(reader, writer)
     
-    # print(scen, year, ": Getting total, new and retired capacities data")
-    # get_capacities_data(reader, writer)
+    print(scen, year, ": Getting total, new and retired capacities data")
+    get_capacities_data(reader, writer)
     
-    # print(scen, year, ": Getting storage data")
-    # get_storage_data(reader, writer)
+    print(scen, year, ": Getting storage data")
+    get_storage_data(reader, writer)
     
-    # print(scen, year, ": Getting curtailment data")
-    # get_curtailment_data(reader, writer)
+    print(scen, year, ": Getting curtailment data")
+    get_curtailment_data(reader, writer)
     
-    # print(scen, year, ": Getting transfer data")
-    # get_transfer_data(reader, writer)
+    print(scen, year, ": Getting transfer data")
+    get_transfer_data(reader, writer)
     
-    # print(scen, year, ": Getting NTC data")
-    # get_NTC_data(reader, writer)
+    print(scen, year, ": Getting NTC data")
+    get_NTC_data(reader, writer)
     
-    # print(scen, year, ": Getting system cost data")
-    # get_cost_data(reader, writer, int(year))
+    print(scen, year, ": Getting system cost data")
+    get_cost_data(reader, writer, int(year))
     
-    # # Save results
-    # writer.save()
+    # Save results
+    writer.save()
     
 for folder in result_folders:
     version = folder.split("-")[0].split("_")[0]
@@ -1122,7 +1123,7 @@ for folder in result_folders:
     scen = suffix#.upper()
     
     # Read output file
-    writer_path = os.path.join("result", "Long 20200406 grouped", "URBS_" + scen + ".xlsx")
+    writer_path = os.path.join("result", "Short 20200406 384h", "URBS_" + scen + ".xlsx")
     book = load_workbook(writer_path)
     reader = pd.read_excel(writer_path, sheet_name=None)
     writer = pd.ExcelWriter(writer_path, engine='openpyxl') 
@@ -1130,7 +1131,7 @@ for folder in result_folders:
     writer.sheets = dict((ws.title, ws) for ws in book.worksheets)
     
     # Read in results
-    urbs_path = os.path.join("result", "Long 20200406 grouped", folder, "scenario_base.h5")
+    urbs_path = os.path.join("result", "Short 20200406 384h", folder, "scenario_base.h5")
     helpdf = urbs.load(urbs_path)
     df_result = helpdf._result
     df_data = helpdf._data
@@ -1144,7 +1145,7 @@ for folder in result_folders:
 for scen in ["base"]:#, "base+CO2", "baseCO2", "base+NTC"]: #["v1", "v3", "v4", "v13", "v134", "v34"]: #
 
     # Read output file
-    writer_path = os.path.join("result", "Long 20200406 grouped", "URBS_" + scen + ".xlsx")
+    writer_path = os.path.join("result", "Short 20200406 384h", "URBS_" + scen + ".xlsx")
     book = load_workbook(writer_path)
     reader = pd.read_excel(writer_path, sheet_name=None)
     writer = pd.ExcelWriter(writer_path, engine='openpyxl') 
