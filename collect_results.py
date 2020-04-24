@@ -126,19 +126,19 @@ dict_countries = {"IE": "IEUK",
                   "EL": "BGELRO",
                   "RO": "BGELRO",
                   }
-dict_countries = {"IEUK": "IEUK",
-                  "FR": "FR",
-                  "BELUNL": "BELUNL",
-                  "DE": "DE",
-                  "DKFINOSE": "DKFINOSE",
-                  "ESPT": "ESPT",
-                  "ATCH": "ATCH",
-                  "IT": "IT",
-                  "CZPLSK": "CZPLSK",
-                  "EELTLV": "EELTLV",
-                  "HRHUSI": "HRHUSI",
-                  "BGELRO": "BGELRO",
-                  }
+# dict_countries = {"IEUK": "IEUK",
+                  # "FR": "FR",
+                  # "BELUNL": "BELUNL",
+                  # "DE": "DE",
+                  # "DKFINOSE": "DKFINOSE",
+                  # "ESPT": "ESPT",
+                  # "ATCH": "ATCH",
+                  # "IT": "IT",
+                  # "CZPLSK": "CZPLSK",
+                  # "EELTLV": "EELTLV",
+                  # "HRHUSI": "HRHUSI",
+                  # "BGELRO": "BGELRO",
+                  # }
 dict_season = {}
 for t in range(0, 8761):
     if (t <= 2184) or (t>=7897):
