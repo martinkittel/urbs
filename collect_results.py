@@ -11,53 +11,25 @@ global dict_countries
 global dict_season
 
 # User preferences
+model_type = '_long_grouped'
+if model_type in ['_long', '_long_grouped']:
+    time_slices = [i for i in range(8761)]
+else:
+    #time_slices = [i for j in (range(1), range(745, 913), range(2905, 3073), range(5089, 5257), range(7297, 7465)) for i in j]
+    time_slices = [i for j in (range(1), range(745, 841), range(2905, 3001), range(5089, 5185), range(7297, 7393)) for i in j]
+
+subfolder = "Long 8760h 12 regions"
+
 result_folders = [
-    # Short 28 countries 384h 2020-04-15
-    'v2.20_2015_base+CO2-20200415T0735',
-    'v2.20_2020_base+CO2-20200415T0755',
-    'v2.20_2025_base+CO2-20200415T0820',
-    'v2.20_2030_base+CO2-20200415T0847',
-    'v2.20_2035_base+CO2-20200415T0913',
-    'v2.20_2040_base+CO2-20200415T0937',
-    'v2.20_2045_base+CO2-20200415T1002',
-    'v2.20_2050_base+CO2-20200415T1025',
-       
-    'v2.20_2015_base+NTC-20200415T0746',
-    'v2.20_2020_base+NTC-20200415T0801',
-    'v2.20_2025_base+NTC-20200415T0821',
-    'v2.20_2030_base+NTC-20200415T0842',
-    'v2.20_2035_base+NTC-20200415T0902',
-    'v2.20_2040_base+NTC-20200415T0921',
-    'v2.20_2045_base+NTC-20200415T0940',
-    'v2.20_2050_base+NTC-20200415T0958',
-       
-    'v2.20_2015_base-20200415T0725',
-    'v2.20_2020_base-20200415T0745',
-    'v2.20_2025_base-20200415T0809',
-    'v2.20_2030_base-20200415T0835',
-    'v2.20_2035_base-20200415T0900',
-    'v2.20_2040_base-20200415T0925',
-    'v2.20_2045_base-20200415T0949',
-    'v2.20_2050_base-20200415T1011',
-       
-    'v2.20_2015_baseCO2-20200415T0736',
-    'v2.20_2020_baseCO2-20200415T0756',
-    'v2.20_2025_baseCO2-20200415T0822',
-    'v2.20_2030_baseCO2-20200415T0848',
-    'v2.20_2035_baseCO2-20200415T0914',
-    'v2.20_2040_baseCO2-20200415T0938',
-    'v2.20_2045_baseCO2-20200415T1002',
-    'v2.20_2050_baseCO2-20200415T1024',
-    
-    # # Long 12 groups 8760h 2020-04-16
-    # 'v2.20_2015_base-20200416T1858',
-    # 'v2.20_2020_base-20200416T2044',
-    # 'v2.20_2025_base-20200417T0401',
-    # 'v2.20_2030_base-20200417T0658',
-    # 'v2.20_2035_base-20200420T0444',
-    # 'v2.20_2040_base-20200420T0813',
-    # 'v2.20_2045_base-20200420T1411',
-    # 'v2.20_2050_base-20200420T2100',
+    # Long 8760h 12 regions
+    'v2.20_2015_base-20200427T1050',
+    'v2.20_2020_base-20200427T1300',
+    'v2.20_2025_base-20200427T1533',
+    'v2.20_2030_base-20200427T1839',
+    'v2.20_2035_base-20200428T0407',
+    'v2.20_2040_base-20200428T0645',
+    'v2.20_2045_base-20200428T1141',
+    'v2.20_2050_base-20200428T1611',
 ]
 
 dict_tech = {"Bio_CCS": "Bio-CCS",
@@ -126,19 +98,20 @@ dict_countries = {"IE": "IEUK",
                   "EL": "BGELRO",
                   "RO": "BGELRO",
                   }
-# dict_countries = {"IEUK": "IEUK",
-                  # "FR": "FR",
-                  # "BELUNL": "BELUNL",
-                  # "DE": "DE",
-                  # "DKFINOSE": "DKFINOSE",
-                  # "ESPT": "ESPT",
-                  # "ATCH": "ATCH",
-                  # "IT": "IT",
-                  # "CZPLSK": "CZPLSK",
-                  # "EELTLV": "EELTLV",
-                  # "HRHUSI": "HRHUSI",
-                  # "BGELRO": "BGELRO",
-                  # }
+if model_type in ["_long_grouped", "_short_grouped"]:
+    dict_countries = {"IEUK": "IEUK",
+                      "FR": "FR",
+                      "BELUNL": "BELUNL",
+                      "DE": "DE",
+                      "DKFINOSE": "DKFINOSE",
+                      "ESPT": "ESPT",
+                      "ATCH": "ATCH",
+                      "IT": "IT",
+                      "CZPLSK": "CZPLSK",
+                      "EELTLV": "EELTLV",
+                      "HRHUSI": "HRHUSI",
+                      "BGELRO": "BGELRO",
+                      }
 dict_season = {}
 for t in range(0, 8761):
     if (t <= 2184) or (t>=7897):
@@ -155,7 +128,7 @@ for t in range(0, 8761):
     # else:
         # dict_season[t] = "midseason"
         
-def extend_to_year(df):
+def extend_to_year(df, time_slices):
     # Get column names
     if isinstance(df, pd.DataFrame):
         col_names = df.columns
@@ -181,11 +154,19 @@ def extend_to_year(df):
     df_empty = df_empty.reset_index().set_index("t_new")
     
     t = df_empty.index
-    df_empty.loc[(t <= 1416) | (t>=8017), "t"] = (df_empty.index[(t <= 1416) | (t>=8017)]-1)%96+1 # winter
-    df_empty.loc[0, "t"] = 0
-    df_empty.loc[(t <= 3624) & (t>=1417), "t"] = (df_empty.index[(t <= 3624) & (t>=1417)]-1)%96+97 # Spring
-    df_empty.loc[(t <= 5832) & (t>=3625), "t"] = (df_empty.index[(t <= 5832) & (t>=3625)]-1)%96+193 # Summer
-    df_empty.loc[(t <= 8016) & (t>=5833), "t"] = (df_empty.index[(t <= 8016) & (t>=5833)]-1)%96+289 # Autumn
+    len_ts = len(time_slices) - 1
+    if len_ts == 8760:
+        df_empty.loc[(t <= 1416) | (t>=8017), "t"] = df_empty.index[(t <= 1416) | (t>=8017)] # winter
+        df_empty.loc[0, "t"] = 0
+        df_empty.loc[(t <= 3624) & (t>=1417), "t"] = df_empty.index[(t <= 3624) & (t>=1417)] # Spring
+        df_empty.loc[(t <= 5832) & (t>=3625), "t"] = df_empty.index[(t <= 5832) & (t>=3625)] # Summer
+        df_empty.loc[(t <= 8016) & (t>=5833), "t"] = df_empty.index[(t <= 8016) & (t>=5833)] # Autumn
+    else:
+        df_empty.loc[(t <= 1416) | (t>=8017), "t"] = (df_empty.index[(t <= 1416) | (t>=8017)]-1)%(len_ts/4)+1 # winter
+        df_empty.loc[0, "t"] = 0
+        df_empty.loc[(t <= 3624) & (t>=1417), "t"] = (df_empty.index[(t <= 3624) & (t>=1417)]-1)%(len_ts/4)+(len_ts/4)+1 # Spring
+        df_empty.loc[(t <= 5832) & (t>=3625), "t"] = (df_empty.index[(t <= 5832) & (t>=3625)]-1)%(len_ts/4)+2*(len_ts/4)+1 # Summer
+        df_empty.loc[(t <= 8016) & (t>=5833), "t"] = (df_empty.index[(t <= 8016) & (t>=5833)]-1)%(len_ts/4)+3*(len_ts/4)+1 # Autumn
     
     df_empty = df_empty.reset_index().set_index(df.index.names)
     df_new = df_empty.join(df).dropna(axis=0).reset_index().drop(columns="t").rename(columns={"t_new":"t"})
@@ -194,7 +175,7 @@ def extend_to_year(df):
     return df_new
     
     
-def add_weight(df):
+def add_weight(df, time_slices):
     # Get column names
     if isinstance(df, pd.DataFrame):
         col_names = df.columns
@@ -207,11 +188,19 @@ def add_weight(df):
     df_empty = df_empty.reset_index().set_index("t_new")
     
     t = df_empty.index
-    df_empty.loc[(t <= 1416) | (t>=8017), "t"] = (df_empty.index[(t <= 1416) | (t>=8017)]-1)%96+1 # winter
-    df_empty.loc[0, "t"] = 0
-    df_empty.loc[(t <= 3624) & (t>=1417), "t"] = (df_empty.index[(t <= 3624) & (t>=1417)]-1)%96+169 # Spring
-    df_empty.loc[(t <= 5832) & (t>=3625), "t"] = (df_empty.index[(t <= 5832) & (t>=3625)]-1)%96+337 # Summer
-    df_empty.loc[(t <= 8016) & (t>=5833), "t"] = (df_empty.index[(t <= 8016) & (t>=5833)]-1)%96+505 # Autumn
+    len_ts = len(time_slices) - 1
+    if len_ts == 8760:
+        df_empty.loc[(t <= 1416) | (t>=8017), "t"] = df_empty.index[(t <= 1416) | (t>=8017)] # winter
+        df_empty.loc[0, "t"] = 0
+        df_empty.loc[(t <= 3624) & (t>=1417), "t"] = df_empty.index[(t <= 3624) & (t>=1417)] # Spring
+        df_empty.loc[(t <= 5832) & (t>=3625), "t"] = df_empty.index[(t <= 5832) & (t>=3625)] # Summer
+        df_empty.loc[(t <= 8016) & (t>=5833), "t"] = df_empty.index[(t <= 8016) & (t>=5833)] # Autumn
+    else:
+        df_empty.loc[(t <= 1416) | (t>=8017), "t"] = (df_empty.index[(t <= 1416) | (t>=8017)]-1)%(len_ts/4)+1 # winter
+        df_empty.loc[0, "t"] = 0
+        df_empty.loc[(t <= 3624) & (t>=1417), "t"] = (df_empty.index[(t <= 3624) & (t>=1417)]-1)%(len_ts/4)+(len_ts/4)+1 # Spring
+        df_empty.loc[(t <= 5832) & (t>=3625), "t"] = (df_empty.index[(t <= 5832) & (t>=3625)]-1)%(len_ts/4)+2*(len_ts/4)+1 # Summer
+        df_empty.loc[(t <= 8016) & (t>=5833), "t"] = (df_empty.index[(t <= 8016) & (t>=5833)]-1)%(len_ts/4)+3*(len_ts/4)+1 # Autumn
     
     weights = df_empty["t"].value_counts().reset_index().rename(columns={"t": "weight"}).rename(columns={"index":"t"})
     weights = weights.set_index("t")
@@ -228,7 +217,7 @@ def get_emissions_data(reader, writer):
     emissions_by_fuel = reader["Emissions by fuel"].set_index(["Site", "scenario-year"])
     
     co2 = df_result["e_pro_out"].unstack()['CO2'].reorder_levels(['sit', 'stf', 'pro', 't']).sort_index().fillna(0)
-    co2 = add_weight(co2)
+    co2 = add_weight(co2, time_slices)
     co2 = co2.unstack(level=3).sum(axis=1)
     co2 = co2.reset_index().rename(columns={"sit":"Site", "stf": "scenario-year"})
     co2["Technology"] = co2["pro"]
@@ -258,7 +247,7 @@ def get_emissions_data(reader, writer):
     
     try: # Bio_CCS negative
         co2_neg = df_result["e_pro_in"].unstack()['CO2'].reorder_levels(['sit', 'stf', 'pro', 't']).sort_index().fillna(0)
-        co2_neg = add_weight(co2_neg)
+        co2_neg = add_weight(co2_neg, time_slices)
         co2_neg = co2_neg.unstack(level=3).sum(axis=1)
         co2_neg = co2_neg.reset_index().rename(columns={"sit":"Site", "stf": "scenario-year"})
         co2_neg["Technology"] = co2_neg["pro"]
@@ -312,7 +301,7 @@ def get_emissions_data(reader, writer):
     else:
         try:
             ccs_co2 = df_result["e_pro_out"].unstack()['CCS_CO2'].fillna(0)
-            ccs_co2 = add_weight(ccs_co2)
+            ccs_co2 = add_weight(ccs_co2, time_slices)
             ccs_co2 = ccs_co2.droplevel([0,3]).reorder_levels(['sit', 'stf']).sort_index()
             ccs_co2 = ccs_co2.reset_index().rename(columns={"sit":"Site", "stf": "scenario-year"}).groupby(["Site", "scenario-year"]).sum() / 10**6 # unit: Mt_CO2
             emissions.loc[ccs_co2.index, "CO2-captured"] = ccs_co2["CCS_CO2"]
@@ -342,12 +331,12 @@ def get_electricity_data(reader, writer, year_built):
     cost_factor = (1 + discount) ** (stf_min - year_built)
     
     prices = df_result["res_vertex"].xs(('Elec', 'Demand'), level=('com', 'com_type')).reorder_levels(['sit', 'stf', 't']).sort_index()
-    prices = extend_to_year(prices)/df_result["weight"][0]
+    prices = extend_to_year(prices, time_slices)/df_result["weight"][0]
     prices = prices.reset_index().rename(columns={"sit": "Site", "stf": "scenario-year"})
     prices["season"] = [dict_season[x] for x in prices["t"]]
     demand = df_data["demand"].droplevel(1, axis=1).stack().reorder_levels([2, 0, 1])
     demand = demand.reset_index().rename(columns={"level_0": "Site", "support_timeframe": "scenario-year"}).set_index(["Site", "scenario-year", "t"])
-    demand = extend_to_year(demand)
+    demand = extend_to_year(demand, time_slices)
     demand = demand.reset_index()
     demand["season"] = [dict_season[x] for x in demand["t"]]
     
@@ -425,7 +414,7 @@ def get_generation_data(reader, writer):
     generation = reader["Electricity generation"].set_index(["Site", "scenario-year"])
     
     prod = df_result["e_pro_out"].unstack()['Elec'].reorder_levels(['sit', 'stf', 'pro', 't']).sort_index().fillna(0)
-    prod = add_weight(prod)
+    prod = add_weight(prod, time_slices)
     prod = prod.unstack(level=3).sum(axis=1)
     prod = prod.reset_index().rename(columns={"sit":"Site", "stf": "scenario-year"})
     prod["Technology"] = prod["pro"]
@@ -609,7 +598,7 @@ def get_storage_data(reader, writer):
     storage_con_regions["avg-state-of-charge"] = storage_con_regions["avg-state-of-charge"] / storage_cap_regions["inst-cap-c"] * 100
     
     # Get stored in energy
-    storage_in = add_weight(df_result["e_sto_in"]).droplevel([0,4]).reset_index().rename(columns={"stf":"scenario-year", "sit":"Site", "e_sto_in":"stored-energy", "sto": "Storage type"})
+    storage_in = add_weight(df_result["e_sto_in"], time_slices).droplevel([0,4]).reset_index().rename(columns={"stf":"scenario-year", "sit":"Site", "e_sto_in":"stored-energy", "sto": "Storage type"})
     storage_in = storage_in.groupby(["Site", "Storage type", "scenario-year"]).sum()
     
     # Correct storage type
@@ -638,13 +627,13 @@ def get_curtailment_data(reader, writer):
     curtailment = reader["Curtailment"]
     
     curtailed = df_result["e_pro_in"].unstack()["Elec"].dropna().droplevel(3).reorder_levels(['sit', 'stf', 't']).sort_index()
-    curtailed = add_weight(curtailed)
+    curtailed = add_weight(curtailed, time_slices)
     curtailed = curtailed.reset_index().rename(columns={"sit": "Site", "stf": "scenario-year"})
     year_now = curtailed["scenario-year"].unique()[0]
     curtailed = curtailed.set_index(["Site", "scenario-year", "t"])
     
     prod = df_result["e_pro_out"].unstack()['Elec'].unstack().reorder_levels(['sit', 'stf', 't']).sort_index().fillna(0)
-    prod = add_weight(prod)
+    prod = add_weight(prod, time_slices)
     for pro in prod.columns:
         if (len(pro) > 5) and (dict_tech[pro[:-5]] in ["Solar", "WindOn", "WindOff", "Hydro"]):
             prod = prod.rename(columns={pro: dict_tech[pro[:-5]]})
@@ -691,7 +680,7 @@ def get_transfer_data(reader, writer):
         tra_out = df_result["e_tra_out"]
     except KeyError:
         return
-    tra_out = add_weight(tra_out)
+    tra_out = add_weight(tra_out, time_slices)
     tra_out = tra_out.droplevel([0,4,5]).reset_index().rename(columns={"stf": "scenario-year", "sit": "Site", "sit_": "Site Out"})
     tra_out = tra_out.groupby(["Site", "scenario-year", "Site Out"]).sum().reset_index()
     
@@ -743,7 +732,7 @@ def get_NTC_data(reader, writer):
     NTC.round(2).reset_index().to_excel(writer, sheet_name='NTC', index=False)
     
     
-def get_NTC_rents_data(reader, writer):
+def get_NTC_rents_data(reader, writer, model_type):
     NTC_rents = reader["NTC rents"].set_index(["Site", "scenario-year"])
     hourly_prices = reader["Hourly prices"].rename(columns={"Hours":"t", "Year":"scenario-year"}).fillna(0)
     hourly_prices = hourly_prices.set_index(["t", "scenario-year"]).stack().reset_index()
@@ -755,10 +744,12 @@ def get_NTC_rents_data(reader, writer):
         tra_out = df_result["e_tra_out"].droplevel([4,5]).reset_index().rename(columns={"stf": "scenario-year", "sit": "Site", "sit_": "Site Out"}).set_index(["Site", "Site Out", "scenario-year", "t"])
     except KeyError:
         return
-    # tra_out = tra_out.reset_index()
-    tra_out = add_weight(tra_out)
-    tra_out_regions = tra_out.reset_index()
-    # tra_out_regions = tra_out.copy()
+    if model_type in ["_long_grouped", "_long"]:
+        tra_out = tra_out.reset_index()
+        tra_out_regions = tra_out.copy()
+    else:
+        tra_out = add_weight(tra_out, time_slices)
+        tra_out_regions = tra_out.reset_index()
     tra_out_regions["Site"] = [dict_countries[x] for x in tra_out_regions["Site"]]
     tra_out_regions["Site Out"] = [dict_countries[x] for x in tra_out_regions["Site Out"]]
     tra_out_regions = tra_out_regions.groupby(["t", "Site", "scenario-year", "Site Out"]).sum().reset_index()
@@ -859,13 +850,13 @@ def get_cost_data(reader, writer, year_built):
     
     # Get produced energy
     prod = df_result["e_pro_out"].unstack()['Elec'].reorder_levels(['sit', 'stf', 'pro', 't']).sort_index().fillna(0)
-    prod = add_weight(prod)
+    prod = add_weight(prod, time_slices)
     prod = prod.unstack(level=3).sum(axis=1).reset_index().rename(columns={"sit":"Site", "stf": "scenario-year", "pro": "Process", 0: "prod"}).set_index(["Site", "scenario-year", "Process"])
     process = process.join(prod)
     
     # Get consumed fuels
     fuel = df_result["e_pro_in"]
-    fuel = add_weight(fuel)
+    fuel = add_weight(fuel, time_slices)
     fuel = fuel.droplevel(0).reset_index().rename(columns={"sit":"Site", "stf": "scenario-year", "pro": "Process", "com": "Commodity"})
     fuel = fuel.groupby(["Site", "scenario-year", "Process", "Commodity"]).sum().reset_index().set_index(["Site", "scenario-year", "Commodity"])
     fuel_price = df_data["commodity"]["price"].reset_index().rename(columns={"support_timeframe": "scenario-year"}).drop(columns="Type").set_index(["Site", "scenario-year", "Commodity"])
@@ -877,7 +868,7 @@ def get_cost_data(reader, writer, year_built):
         emissions = df_result["e_pro_out"].unstack()[['CO2', "CCS_CO2"]].reorder_levels(['sit', 'stf', 'pro', 't']).sort_index().fillna(0).stack().rename("emissions")
     except KeyError:
         emissions = df_result["e_pro_out"].unstack()[['CO2']].stack().reorder_levels(['sit', 'stf', 'pro', 'com', 't']).sort_index().fillna(0).rename("emissions")
-    emissions = add_weight(emissions)
+    emissions = add_weight(emissions, time_slices)
     emissions = emissions.reset_index().rename(columns={"sit":"Site", "stf": "scenario-year", "pro": "Process", "com": "Commodity", 0: "emissions"}).groupby(["Site", "scenario-year", "Process", "Commodity"]).sum()
     emissions = emissions.reset_index().set_index(["Site", "scenario-year", "Commodity"]).join(fuel_price.rename(columns={"price": "emissions_price"}))
     emissions["costs_env"] = emissions["emissions"] * emissions["emissions_price"]
@@ -886,9 +877,9 @@ def get_cost_data(reader, writer, year_built):
     
     # Get storage flow
     try:
-        storage_in = add_weight(df_result["e_sto_in"]).droplevel(0).reset_index().rename(columns={"stf":"scenario-year", "sit":"Site", "sto": "Storage", "com":"Commodity"})
+        storage_in = add_weight(df_result["e_sto_in"], time_slices).droplevel(0).reset_index().rename(columns={"stf":"scenario-year", "sit":"Site", "sto": "Storage", "com":"Commodity"})
         storage_in = storage_in.groupby(["Site", "scenario-year", "Storage", "Commodity"]).sum()
-        storage_out = add_weight(df_result["e_sto_out"]).droplevel(0).reset_index().rename(columns={"stf":"scenario-year", "sit":"Site", "sto": "Storage", "com":"Commodity"})
+        storage_out = add_weight(df_result["e_sto_out"], time_slices).droplevel(0).reset_index().rename(columns={"stf":"scenario-year", "sit":"Site", "sto": "Storage", "com":"Commodity"})
         storage_out = storage_out.groupby(["Site", "scenario-year", "Storage", "Commodity"]).sum()
         storage = storage.join([storage_in, storage_out])
     except KeyError:
@@ -1070,7 +1061,7 @@ for folder in result_folders:
     scen = suffix#.upper()
     
     # Read output file
-    writer_path = os.path.join("result", "Short 20200406 384h", "URBS_" + scen + ".xlsx")
+    writer_path = os.path.join("result", subfolder, "URBS_" + scen + ".xlsx")
     book = load_workbook(writer_path)
     reader = pd.read_excel(writer_path, sheet_name=None)
     writer = pd.ExcelWriter(writer_path, engine='openpyxl') 
@@ -1078,7 +1069,7 @@ for folder in result_folders:
     writer.sheets = dict((ws.title, ws) for ws in book.worksheets)
     
     # Read in results
-    urbs_path = os.path.join("result", "Short 20200406 384h", folder, "scenario_base.h5")
+    urbs_path = os.path.join("result", subfolder, folder, "scenario_base.h5")
     helpdf = urbs.load(urbs_path)
     df_result = helpdf._result
     df_data = helpdf._data
@@ -1123,7 +1114,7 @@ for folder in result_folders:
     scen = suffix#.upper()
     
     # Read output file
-    writer_path = os.path.join("result", "Short 20200406 384h", "URBS_" + scen + ".xlsx")
+    writer_path = os.path.join("result", subfolder, "URBS_" + scen + ".xlsx")
     book = load_workbook(writer_path)
     reader = pd.read_excel(writer_path, sheet_name=None)
     writer = pd.ExcelWriter(writer_path, engine='openpyxl') 
@@ -1131,21 +1122,21 @@ for folder in result_folders:
     writer.sheets = dict((ws.title, ws) for ws in book.worksheets)
     
     # Read in results
-    urbs_path = os.path.join("result", "Short 20200406 384h", folder, "scenario_base.h5")
+    urbs_path = os.path.join("result", subfolder, folder, "scenario_base.h5")
     helpdf = urbs.load(urbs_path)
     df_result = helpdf._result
     df_data = helpdf._data
     
     print(scen, year, ": Getting NTC rents data")
-    get_NTC_rents_data(reader, writer)
+    get_NTC_rents_data(reader, writer, model_type)
     
     # Save results
     writer.save()
     
-for scen in ["base"]:#, "base+CO2", "baseCO2", "base+NTC"]: #["v1", "v3", "v4", "v13", "v134", "v34"]: #
+for scen in ["base"]:#, "baseCO2", "base+CO2", "base+NTC" ["v1", "v3", "v4", "v13", "v134", "v34"]: #
 
     # Read output file
-    writer_path = os.path.join("result", "Short 20200406 384h", "URBS_" + scen + ".xlsx")
+    writer_path = os.path.join("result", subfolder, "URBS_" + scen + ".xlsx")
     book = load_workbook(writer_path)
     reader = pd.read_excel(writer_path, sheet_name=None)
     writer = pd.ExcelWriter(writer_path, engine='openpyxl') 

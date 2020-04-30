@@ -347,7 +347,7 @@ def write_Storage(Storage, Storage_prev, version, suffix, year, writer):
     Storage_year.to_excel(writer, sheet_name='Storage', index=False)
     
 
-def add_weight(df):
+def add_weight(df, time_slices):
     # Get column names
     if isinstance(df, pd.DataFrame):
         col_names = df.columns
@@ -360,11 +360,19 @@ def add_weight(df):
     df_empty = df_empty.reset_index().set_index("t_new")
     
     t = df_empty.index
-    df_empty.loc[(t <= 1416) | (t>=8017), "t"] = (df_empty.index[(t <= 1416) | (t>=8017)]-1)%168+1 # winter
-    df_empty.loc[0, "t"] = 0
-    df_empty.loc[(t <= 3624) & (t>=1417), "t"] = (df_empty.index[(t <= 3624) & (t>=1417)]-1)%168+169 # Spring
-    df_empty.loc[(t <= 5832) & (t>=3625), "t"] = (df_empty.index[(t <= 5832) & (t>=3625)]-1)%168+337 # Summer
-    df_empty.loc[(t <= 8016) & (t>=5833), "t"] = (df_empty.index[(t <= 8016) & (t>=5833)]-1)%168+505 # Autumn
+    len_ts = len(time_slices) - 1
+    if len_ts == 8760:
+        df_empty.loc[(t <= 1416) | (t>=8017), "t"] = df_empty.index[(t <= 1416) | (t>=8017)] # winter
+        df_empty.loc[0, "t"] = 0
+        df_empty.loc[(t <= 3624) & (t>=1417), "t"] = df_empty.index[(t <= 3624) & (t>=1417)] # Spring
+        df_empty.loc[(t <= 5832) & (t>=3625), "t"] = df_empty.index[(t <= 5832) & (t>=3625)] # Summer
+        df_empty.loc[(t <= 8016) & (t>=5833), "t"] = df_empty.index[(t <= 8016) & (t>=5833)] # Autumn
+    else:
+        df_empty.loc[(t <= 1416) | (t>=8017), "t"] = (df_empty.index[(t <= 1416) | (t>=8017)]-1)%(len_ts/4)+1 # winter
+        df_empty.loc[0, "t"] = 0
+        df_empty.loc[(t <= 3624) & (t>=1417), "t"] = (df_empty.index[(t <= 3624) & (t>=1417)]-1)%(len_ts/4)+(len_ts/4)+1 # Spring
+        df_empty.loc[(t <= 5832) & (t>=3625), "t"] = (df_empty.index[(t <= 5832) & (t>=3625)]-1)%(len_ts/4)+2*(len_ts/4)+1 # Summer
+        df_empty.loc[(t <= 8016) & (t>=5833), "t"] = (df_empty.index[(t <= 8016) & (t>=5833)]-1)%(len_ts/4)+3*(len_ts/4)+1 # Autumn
     
     weights = df_empty["t"].value_counts().reset_index().rename(columns={"t": "weight"}).rename(columns={"index":"t"})
     weights = weights.set_index("t")
@@ -526,7 +534,7 @@ def Database_to_urbs_grouped(version, model_type, suffix, year, result_folder, t
     annual_dem = annual[annual['Commodity']=='Elec']
     annual_dem.set_index('Site', inplace=True)
     annual_dem = annual_dem['annual']
-    Demand_year_weighted = add_weight(Demand_year)
+    Demand_year_weighted = add_weight(Demand_year, time_slices)
     for c in Demand_year.columns:
         Demand_year[c] = (annual_dem[c] * Demand_year[c]) / Demand_year_weighted[c].sum()
         Demand_year = Demand_year.rename(columns={c: dict_countries[c]+'.Elec'})
