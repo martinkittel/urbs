@@ -12,40 +12,64 @@ global dict_season
 
 # User preferences
 result_folders = [
-    'v1.00_2016_base+PV-20200424T0610',
+    'v1.00_2020_base-20200430T1000',
 ]
 
-dict_tech = {"Bioenergy": "Bioenergy",
-             "Hydro_2016": "Hydro",
-             "Lignite": "Lignite",
-             "Import": "Import",
-             "Solar_2016": "Solar",
+dict_tech = {"BKOMG1": "Gas",
+             "Exxon G3": "Gas",
+             "Exxon G4": "Gas",
+             "KMBCBLK1": "Gas",
+             "KMBCBLK2": "Gas",
+             "KMBCBLK3": "Gas",
+             "KMBCBLK4": "Gas",
+             "PACLBLK1": "Gas",
+             "PACLBLK2": "Gas",
+             "SEMBCCP3": "Gas",
+             "SerayaST1": "Gas",
+             "SerayaST2": "Gas",
+             "SerayaST3": "Gas",
+             "SerayaST4": "Gas",
+             "SerayaST5": "Gas",
+             "SerayaST6": "Gas",
+             "SERCCP1": "Gas",
+             "SERCCP2": "Gas",
+             "SERCCP3": "Gas",
+             "SERCCP4": "Gas",
+             "SHULG1": "Gas",
+             "SKRAG1": "Gas",
+             "SKRAG2": "Gas",
+             "SNKCCP1": "Gas",
+             "SNKCCP2": "Gas",
+             "SNKCCP3": "Gas",
+             "SNKCCP4": "Gas",
+             "SNKCCP5": "Gas",
+             "SNKCCP6": "Gas",
+             "SNKCCP7": "Gas",
+             "TMUCG1": "Gas",
+             "TMUCG2": "Gas",
+             "TSPBLK1": "Gas",
+             "TUASCCP1": "Gas",
+             "TUASCCP2": "Gas",
+             "TUASCCP3": "Gas",
+             "TUASCCP4": "Gas",
+             "TUASCCP5": "Gas",
+             "TuasGasST": "Gas",
+             "JURGT1": "LFO",
+             "JURGT2": "LFO",
+             "SenokoOil": "Oil",
+             "KeppelInciner": "Waste",
+             "SenokoInciner": "Waste",
+             "TUASInciner1": "Waste",
+             "TUASInciner2": "Waste",
+             "Solar_PV": "Solar",
              "Slack": "Slack",
-             "Shunt": "Curtailment",
              }
+
+
 dict_countries = {
-                  "Attapu": "Southern",
-                  "Bokeo": "Northern",
-                  "Bolikhamxai": "Central2",
-                  "Champasak": "Southern",
-                  "Houaphan": "Central1",
-                  "Khammouan": "Central2",
-                  "LouangNamtha": "Northern",
-                  "Louangphrabang": "Northern",
-                  "Oudomxai": "Northern",
-                  "Phongsali": "Northern",
-                  "Saravan": "Southern", 
-                  "Savannakhet": "Central2",
-                  "VientianeProvince": "Central1",
-                  "VientianePrefecture": "Central1",
-                  "Xaignabouri": "Northern",
-                  "Xaisomboun": "Central1",
-                  "Xiangkhoang": "Central1",
-                  "Xekong": "Southern",
-                  "China": "China",
-                  "Thailand": "Thailand",
-                  "Vietnam": "Vietnam",
-                  "Cambodia": "Cambodia",
+                  "Singapore": "Singapore",
+                  "Tennant Creek": "Tennant Creek",
+                  "Darwin": "Darwin",
                   }
 
 dict_season = {}
@@ -159,18 +183,17 @@ def get_emissions_data(reader, writer):
     emissions.loc[co2.index, "CO2-emissions-elec"] = co2.sum(axis=1)
     
     try:
-        #emissions_by_fuel.loc[co2.index, "CO2-emissions-coal"] = co2["Coal"] + co2["Coal-CCS"]
-        #emissions_by_fuel.loc[co2.index, "CO2-emissions-gas"] = co2["Gas-CCGT"] + co2["Gas-OCGT"] + co2["Gas-ST"] + co2["Gas-CCS"]
-        emissions_by_fuel.loc[co2.index, "CO2-emissions-lignite"] = co2["Lignite"]
-        #emissions_by_fuel.loc[co2.index, "CO2-emissions-oil/other"] = co2["OilOther"]
-    except KeyError:
-        try: # No CCS
-            emissions_by_fuel.loc[co2.index, "CO2-emissions-coal"] = co2["Coal"]
-            emissions_by_fuel.loc[co2.index, "CO2-emissions-gas"] = co2["Gas-CCGT"] + co2["Gas-OCGT"] + co2["Gas-ST"]
-            emissions_by_fuel.loc[co2.index, "CO2-emissions-lignite"] = co2["Lignite"]
-            emissions_by_fuel.loc[co2.index, "CO2-emissions-oil/other"] = co2["OilOther"]
-        except KeyError: # Aggregated technologies
-            emissions_by_fuel.loc[co2.index, "CO2-emissions-gas"] = co2["Gas-CCGT"]
+        emissions_by_fuel.loc[co2.index, "CO2-emissions-LFO"] = co2["LFO"] + co2["LFO-CCS"]
+        emissions_by_fuel.loc[co2.index, "CO2-emissions-gas"] = co2["Gas"] + co2["Gas-CCS"]
+        emissions_by_fuel.loc[co2.index, "CO2-emissions-oil"] = co2["Oil"]
+        emissions_by_fuel.loc[co2.index, "CO2-emissions-waste"] = co2["Waste"]
+        emissions_by_fuel.loc[co2.index, "CO2-emissions-slack"] = co2["Slack"]
+    except KeyError: # No CCS
+        emissions_by_fuel.loc[co2.index, "CO2-emissions-LFO"] = co2["LFO"]
+        emissions_by_fuel.loc[co2.index, "CO2-emissions-gas"] = co2["Gas"]
+        emissions_by_fuel.loc[co2.index, "CO2-emissions-oil"] = co2["Oil"]
+        emissions_by_fuel.loc[co2.index, "CO2-emissions-waste"] = co2["Waste"]
+        emissions_by_fuel.loc[co2.index, "CO2-emissions-slack"] = co2["Slack"]
     
     try: # Bio_CCS negative
         co2_neg = df_result["e_pro_in"].unstack()['CO2'].reorder_levels(['sit', 'stf', 'pro', 't']).sort_index().fillna(0)
@@ -198,28 +221,17 @@ def get_emissions_data(reader, writer):
     emissions.loc[co2_regions.index, "CO2-emissions-elec"] = co2_regions.sum(axis=1)
     
     try:
-        #emissions_by_fuel.loc[co2_regions.index, "CO2-emissions-coal"] = co2_regions["Coal"] + co2_regions["Coal-CCS"]
-        #emissions_by_fuel.loc[co2_regions.index, "CO2-emissions-gas"] = co2_regions["Gas-CCGT"] + co2_regions["Gas-OCGT"] + co2_regions["Gas-ST"] + co2_regions["Gas-CCS"]
-        emissions_by_fuel.loc[co2_regions.index, "CO2-emissions-lignite"] = co2_regions["Lignite"]
-        #emissions_by_fuel.loc[co2_regions.index, "CO2-emissions-oil/other"] = co2_regions["OilOther"]
-    except KeyError:
-        try: # No CCS
-            emissions_by_fuel.loc[co2_regions.index, "CO2-emissions-coal"] = co2_regions["Coal"]
-            emissions_by_fuel.loc[co2_regions.index, "CO2-emissions-gas"] = co2_regions["Gas-CCGT"] + co2_regions["Gas-OCGT"] + co2_regions["Gas-ST"]
-            emissions_by_fuel.loc[co2_regions.index, "CO2-emissions-lignite"] = co2_regions["Lignite"]
-            emissions_by_fuel.loc[co2_regions.index, "CO2-emissions-oil/other"] = co2_regions["OilOther"]
-        except KeyError: # Aggregated technologies
-            emissions_by_fuel.loc[co2_regions.index, "CO2-emissions-gas"] = co2_regions["Gas-CCGT"]
-        
-    try: # Bio_CCS negative
-        co2_neg_regions = co2_neg.reset_index()
-        co2_neg_regions["Site"] = [dict_countries[x] for x in co2_neg_regions["Site"]]
-        co2_neg_regions = co2_neg_regions.groupby(["Site", "scenario-year"]).sum(axis=0)
-        emissions.loc[co2_neg_regions.index.difference(co2_neg.index), "CO2-emissions-elec"] = emissions.loc[co2_neg_regions.index.difference(co2_neg.index), "CO2-emissions-elec"] - co2_neg_regions.sum(axis=1)
-    
-        emissions_by_fuel.loc[co2_neg_regions.index, "CO2-emissions-bioenergy"] = - co2_neg_regions["Bio-CCS"]
-    except:
-        pass
+        emissions_by_fuel.loc[co2_regions.index, "CO2-emissions-LFO"] = co2_regions["LFO"] + co2_regions["LFO-CCS"]
+        emissions_by_fuel.loc[co2_regions.index, "CO2-emissions-gas"] = co2_regions["Gas"] + co2_regions["Gas-CCS"]
+        emissions_by_fuel.loc[co2_regions.index, "CO2-emissions-oil"] = co2_regions["Oil"]
+        emissions_by_fuel.loc[co2_regions.index, "CO2-emissions-waste"] = co2_regions["Waste"]
+        emissions_by_fuel.loc[co2_regions.index, "CO2-emissions-slack"] = co2_regions["Slack"]
+    except KeyError: # No CCS
+        emissions_by_fuel.loc[co2_regions.index, "CO2-emissions-LFO"] = co2_regions["LFO"]
+        emissions_by_fuel.loc[co2_regions.index, "CO2-emissions-gas"] = co2_regions["Gas"]
+        emissions_by_fuel.loc[co2_regions.index, "CO2-emissions-oil"] = co2_regions["Oil"]
+        emissions_by_fuel.loc[co2_regions.index, "CO2-emissions-waste"] = co2_regions["Waste"]
+        emissions_by_fuel.loc[co2_regions.index, "CO2-emissions-slack"] = co2_regions["Slack"]
     
     # # CCS_CO2
     # if year == "2016":
@@ -408,7 +420,7 @@ def get_capacities_data(reader, writer):
     capacities_total.loc[cap_total_regions.index, cap_total_regions.columns] = cap_total_regions
     
     # Retired capacity (continued)
-    if year_now == 2016:
+    if year_now == 2020:
         capacities_retired.loc[cap_total.index, :] = 0
         capacities_retired.loc[cap_total_regions.index, :] = 0
     else:
@@ -811,7 +823,7 @@ def get_cost_data(reader, writer, year_built):
     # Find investment that have not completed their depreciation period
     process['active'] = 0
     #storage['active'] = 0
-    if year_built > 2016:
+    if year_built > 2020:
         process['Construction year'] = 2016
         for ind in process.index:
             if "Shunt" not in ind:
@@ -866,7 +878,7 @@ def get_cost_data(reader, writer, year_built):
     abatement.loc[year_built, "inv-costs-abs"] = costs_inv_abs / 10**6
     abatement.loc[year_built, "inv-costs-abs-horizon"] = costs_inv_abs_horizon / 10**6
     abatement.loc[year_built, "inv-capital-pro"] = process["capital_inv"].sum() / 10**6
-    if year_built > 2016:
+    if year_built > 2020:
         abatement.loc[year_built, "inv-capital-tra"] = abatement.loc[year_built-5, "inv-capital-tra"] + transmission["costs_inv"].sum() / 10**6
     else:
         abatement.loc[year_built, "inv-capital-tra"] = 0
@@ -978,7 +990,7 @@ for folder in result_folders:
     scen = suffix#.upper()
     
     # Read output file
-    writer_path = os.path.join("result", "Laos", "URBS_" + scen + ".xlsx")
+    writer_path = os.path.join("result", "SunCable", "URBS_" + scen + ".xlsx")
     book = load_workbook(writer_path)
     reader = pd.read_excel(writer_path, sheet_name=None)
     writer = pd.ExcelWriter(writer_path, engine='openpyxl') 
@@ -986,7 +998,7 @@ for folder in result_folders:
     writer.sheets = dict((ws.title, ws) for ws in book.worksheets)
     
     # Read in results
-    urbs_path = os.path.join("result", "Laos", folder, "scenario_base.h5")
+    urbs_path = os.path.join("result", "SunCable", folder, "scenario_base.h5")
     helpdf = urbs.load(urbs_path)
     df_result = helpdf._result
     df_data = helpdf._data
@@ -1006,11 +1018,11 @@ for folder in result_folders:
     print(scen, year, ": Getting total, new and retired capacities data")
     get_capacities_data(reader, writer)
     
-    # print(scen, year, ": Getting storage data")
-    # get_storage_data(reader, writer)
+    print(scen, year, ": Getting storage data")
+    get_storage_data(reader, writer)
     
-    print(scen, year, ": Getting curtailment data")
-    get_curtailment_data(reader, writer)
+    # print(scen, year, ": Getting curtailment data")
+    # get_curtailment_data(reader, writer)
     
     print(scen, year, ": Getting transfer data")
     get_transfer_data(reader, writer)
@@ -1031,7 +1043,7 @@ for folder in result_folders:
     scen = suffix#.upper()
     
     # Read output file
-    writer_path = os.path.join("result", "Laos", "URBS_" + scen + ".xlsx")
+    writer_path = os.path.join("result", "SunCable", "URBS_" + scen + ".xlsx")
     book = load_workbook(writer_path)
     reader = pd.read_excel(writer_path, sheet_name=None)
     writer = pd.ExcelWriter(writer_path, engine='openpyxl') 
@@ -1039,7 +1051,7 @@ for folder in result_folders:
     writer.sheets = dict((ws.title, ws) for ws in book.worksheets)
     
     # Read in results
-    urbs_path = os.path.join("result", "Laos", folder, "scenario_base.h5")
+    urbs_path = os.path.join("result", "SunCable", folder, "scenario_base.h5")
     helpdf = urbs.load(urbs_path)
     df_result = helpdf._result
     df_data = helpdf._data
@@ -1050,10 +1062,10 @@ for folder in result_folders:
     # Save results
     writer.save()
     
-for scen in ["base+PV"]:#, "base+CO2", "baseCO2", "base+NTC"]: #["v1", "v3", "v4", "v13", "v134", "v34"]: #
+for scen in ["base"]:#, "base+CO2", "baseCO2", "base+NTC"]: #["v1", "v3", "v4", "v13", "v134", "v34"]: #
 
     # Read output file
-    writer_path = os.path.join("result", "Laos", "URBS_" + scen + ".xlsx")
+    writer_path = os.path.join("result", "SunCable", "URBS_" + scen + ".xlsx")
     book = load_workbook(writer_path)
     reader = pd.read_excel(writer_path, sheet_name=None)
     writer = pd.ExcelWriter(writer_path, engine='openpyxl') 
