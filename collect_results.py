@@ -11,25 +11,25 @@ global dict_countries
 global dict_season
 
 # User preferences
-model_type = '_long_grouped'
+model_type = '_long'
 if model_type in ['_long', '_long_grouped']:
     time_slices = [i for i in range(8761)]
 else:
     #time_slices = [i for j in (range(1), range(745, 913), range(2905, 3073), range(5089, 5257), range(7297, 7465)) for i in j]
     time_slices = [i for j in (range(1), range(745, 841), range(2905, 3001), range(5089, 5185), range(7297, 7393)) for i in j]
 
-subfolder = "Long 8760h 12 regions"
+subfolder = "Long 8760h 28 regions"
 
 result_folders = [
-    # Long 8760h 12 regions
-    'v2.20_2015_base-20200427T1050',
-    'v2.20_2020_base-20200427T1300',
-    'v2.20_2025_base-20200427T1533',
-    'v2.20_2030_base-20200427T1839',
-    'v2.20_2035_base-20200428T0407',
-    'v2.20_2040_base-20200428T0645',
-    'v2.20_2045_base-20200428T1141',
-    'v2.20_2050_base-20200428T1611',
+    # Long 8760h 28 regions
+    'v2.20_2015_base-20200427T1059',
+    'v2.20_2020_base-20200428T0411',
+    'v2.20_2025_base-20200428T1145',
+    'v2.20_2030_base-20200429T0421',
+    'v2.20_2035_base-20200429T2258',
+    'v2.20_2040_base-20200430T2018',
+    'v2.20_2045_base-20200502T0451',
+    'v2.20_2050_base-20200503T0250',
 ]
 
 dict_tech = {"Bio_CCS": "Bio-CCS",
