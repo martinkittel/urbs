@@ -201,7 +201,6 @@ def def_storage_power_rule(m, stf, sit, sto, com):
     return cap_sto_p
 
 
-
 # storage input <= storage power
 def res_storage_input_by_power_rule(m, t, stf, sit, sto, com):
     return (m.e_sto_in[t, stf, sit, sto, com] <= m.dt *
