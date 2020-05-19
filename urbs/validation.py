@@ -33,8 +33,8 @@ def validate_input(data):
                                  '! The pair (' + sit + ',' + com + ')'
                                  ' is not in commodity input sheet.')
 
-    
-     # Add global parameters if necessary
+
+    # Add global parameters if necessary
     for stf in data['global_prop'].index.get_level_values(0):
         if 'Cost limit' not in data['global_prop'].loc[stf].index:
             data['global_prop'].loc[(stf, 'Cost limit'), :] = np.inf
@@ -89,9 +89,11 @@ def validate_input(data):
                     if data['transmission'].loc[index]['eff'] != 1:
                         raise ValueError('Ensure efficiency of DCPF Transmission Lines are 1')
                     if not data['transmission'].loc[index]['base_voltage'] > 0:
-                        raise ValueError('Ensure base voltage of DCPF transmission lines are greater than 0')
+                        raise ValueError('Ensure base voltage of DCPF transmission lines are '
+                                         'greater than 0')
                     if not (0 < data['transmission'].loc[index]['difflimit'] <= 90):
-                        raise ValueError('Ensure angle difference of DCPF transmission lines are between 90 and 0 '
+                        raise ValueError('Ensure angle difference of DCPF transmission lines '
+                                         'are between 90 and 0 '
                                          'degrees')
 
     if not data['storage'].empty:
@@ -162,5 +164,7 @@ def validate_input(data):
 def validate_dc_objective(data, objective):
     if not data['transmission'].empty:
         if 'reactance' in data['transmission'].keys():
-            if any(data['transmission']['reactance'] > 0) and (objective == 'CO2') and any(data['transmission']['var-cost'] > 0):
-                print("\nif the C02 is selected as objective function while modelling DC transmission lines, variable costs may be incorrect \n")
+            if any(data['transmission']['reactance'] > 0) and (objective == 'CO2') \
+                    and any(data['transmission']['var-cost'] > 0):
+                print("\nif the C02 is selected as objective function while modelling "
+                      "DC transmission lines, variable costs may be incorrect \n")

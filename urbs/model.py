@@ -369,9 +369,6 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
             ' cap_pro * min_fraction * (r - R) / (1 - min_fraction)'
             ' + tau_pro * (R - min_fraction * r) / (1 - min_fraction)')
 
-
-
-
     # if m.mode['int']:
         # m.res_global_co2_limit = pyomo.Constraint(
             # m.stf,
@@ -403,12 +400,12 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
             m.stf,
             rule=res_global_co2_limit_rule,
             doc='total co2 commodity output <= Global CO2 limit')
-            
+
         if m.mode['int']:
             m.res_global_co2_budget = pyomo.Constraint(
                 rule=res_global_co2_budget_rule,
                 doc='total co2 commodity output <= global.prop CO2 budget')
-            
+
             m.res_global_cost_limit = pyomo.Constraint(
                 m.stf,
                 rule=res_global_cost_limit_rule,
@@ -434,7 +431,7 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
                 m.stf,
                 rule=res_global_co2_limit_rule,
                 doc='total co2 commodity output <= Global CO2 limit')
-                
+
         m.objective_function = pyomo.Objective(
             rule=co2_rule,
             sense=pyomo.minimize,

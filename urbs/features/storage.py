@@ -262,7 +262,7 @@ def def_cap_credit_storage(m, stf, sit, com):
 
 # storage balance
 def storage_balance(m, tm, stf, sit, com):
-    """callesd in commodity balance
+    """called in commodity balance
     For a given commodity co and timestep tm, calculate the balance of
     storage input and output """
 
