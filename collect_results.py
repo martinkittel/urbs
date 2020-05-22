@@ -12,7 +12,13 @@ global dict_season
 
 # User preferences
 result_folders = [
-    'v1.00_2020_base-20200430T1000',
+    # 'v1.00_2020_base-20200520T2030',
+    # 'v1.10_2020_base-20200521T0702',
+    # 'v1.20_2020_base-20200521T0710',
+    # 'v1.30_2020_base-20200521T0730',
+    # 'v1.40_2020_base-20200521T0749',
+    # 'v1.50_2020_base-20200521T0813',
+    'v1.60_2020_base-20200521T0831',
 ]
 
 dict_tech = {"BKOMG1": "Gas",
@@ -363,6 +369,7 @@ def get_generation_data(reader, writer):
     prod = prod.drop(columns=["pro"]).groupby(["Site", "scenario-year", "Technology"]).sum().unstack()[0].fillna(0)
     generation.loc[prod.index, prod.columns] = prod
     generation.loc[prod.index] = generation.loc[prod.index].fillna(0)
+    #import pdb; pdb.set_trace()
     
     prod_regions = prod.reset_index()
     prod_regions["Site"] = [dict_countries[x] for x in prod_regions["Site"]]
@@ -556,6 +563,7 @@ def get_curtailment_data(reader, writer):
     curtailment = reader["Curtailment"]
     
     curtailed = df_result["e_pro_in"].unstack()["Elec"].dropna().droplevel(3).reorder_levels(['sit', 'stf', 't']).sort_index()
+    #import pdb; pdb.set_trace()
     curtailed = add_weight(curtailed)
     curtailed = curtailed.reset_index().rename(columns={"sit": "Site", "stf": "scenario-year"})
     year_now = curtailed["scenario-year"].unique()[0]
@@ -571,6 +579,7 @@ def get_curtailment_data(reader, writer):
         prod = prod.stack().reset_index().rename(columns={"sit":"Site", "stf": "scenario-year", "level_3": "pro"}).groupby(["Site", "scenario-year", "t", "pro"]).sum()
         prod = prod.unstack().fillna(0)[0]
     except IndexError:
+        import pdb; pdb.set_trace()
         return
     
     try:
@@ -687,6 +696,7 @@ def get_NTC_rents_data(reader, writer):
     
     tra_out = tra_out.drop(columns=["e_tra_out", "t", "price Site", "price Site Out"]).groupby(["Site", "scenario-year", "Site Out"]).sum().reset_index()
     
+    #import pdb; pdb.set_trace()
     idx_drop = []
     for idx in tra_out.index:
         if tra_out.loc[idx, "rent"] == 0:
@@ -990,7 +1000,7 @@ for folder in result_folders:
     scen = suffix#.upper()
     
     # Read output file
-    writer_path = os.path.join("result", "SunCable", "URBS_" + scen + ".xlsx")
+    writer_path = os.path.join("result", "SunCable", "URBS_" + scen + "_" + version + ".xlsx")
     book = load_workbook(writer_path)
     reader = pd.read_excel(writer_path, sheet_name=None)
     writer = pd.ExcelWriter(writer_path, engine='openpyxl') 
@@ -1043,7 +1053,7 @@ for folder in result_folders:
     scen = suffix#.upper()
     
     # Read output file
-    writer_path = os.path.join("result", "SunCable", "URBS_" + scen + ".xlsx")
+    writer_path = os.path.join("result", "SunCable", "URBS_" + scen + "_" + version + ".xlsx")
     book = load_workbook(writer_path)
     reader = pd.read_excel(writer_path, sheet_name=None)
     writer = pd.ExcelWriter(writer_path, engine='openpyxl') 
@@ -1059,23 +1069,7 @@ for folder in result_folders:
     print(scen, year, ": Getting NTC rents data")
     get_NTC_rents_data(reader, writer)
     
-    # Save results
-    writer.save()
-    
-for scen in ["base"]:#, "base+CO2", "baseCO2", "base+NTC"]: #["v1", "v3", "v4", "v13", "v134", "v34"]: #
-
-    # Read output file
-    writer_path = os.path.join("result", "SunCable", "URBS_" + scen + ".xlsx")
-    book = load_workbook(writer_path)
-    reader = pd.read_excel(writer_path, sheet_name=None)
-    writer = pd.ExcelWriter(writer_path, engine='openpyxl') 
-    writer.book = book
-    writer.sheets = dict((ws.title, ws) for ws in book.worksheets)
-
-    # print(scen, ": Getting FLH data")
-    # get_FLH_data(reader, writer)
-    
-    print(scen, ": Getting abatement data")
+    print(scen, year, ": Getting abatement data")
     get_abatement(reader, writer)
     
     # Save results
