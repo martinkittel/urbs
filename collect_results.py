@@ -11,26 +11,16 @@ global dict_countries
 global dict_season
 
 # User preferences
-model_type = '_long'
+model_type = '_short_grouped'
 if model_type in ['_long', '_long_grouped']:
     time_slices = [i for i in range(8761)]
 else:
     #time_slices = [i for j in (range(1), range(745, 913), range(2905, 3073), range(5089, 5257), range(7297, 7465)) for i in j]
     time_slices = [i for j in (range(1), range(745, 841), range(2905, 3001), range(5089, 5185), range(7297, 7393)) for i in j]
 
-subfolder = "Long 8760h 28 regions"
+subfolder = "Short 384h 12 regions new"
 
-result_folders = [
-    # Long 8760h 28 regions
-    'v2.20_2015_base-20200427T1059',
-    'v2.20_2020_base-20200428T0411',
-    'v2.20_2025_base-20200428T1145',
-    'v2.20_2030_base-20200429T0421',
-    'v2.20_2035_base-20200429T2258',
-    'v2.20_2040_base-20200430T2018',
-    'v2.20_2045_base-20200502T0451',
-    'v2.20_2050_base-20200503T0250',
-]
+result_folders = [f.name for f in os.scandir(os.path.join("result", subfolder)) if (f.is_dir() and f.name[0]=="v")]
 
 dict_tech = {"Bio_CCS": "Bio-CCS",
              "Bioenergy": "Bioenergy",
@@ -672,6 +662,12 @@ def get_curtailment_data(reader, writer):
     curtailment.loc[curtailed_regions.index, curtailed_regions.columns] = curtailed_regions
     curtailment.round(2).reset_index().to_excel(writer, sheet_name='Curtailment', index=False)
     
+    # Update electricity generation table
+    generation = reader["Electricity generation"].set_index(["Site", "scenario-year"])
+    generation.loc[curtailed.index, curtailed.columns] = generation.loc[curtailed.index, curtailed.columns] - curtailed
+    generation.loc[curtailed_regions.index, curtailed_regions.columns] = generation.loc[curtailed_regions.index, curtailed_regions.columns] - curtailed_regions
+    generation.round(2).reset_index().to_excel(writer, sheet_name='Electricity generation', index=False)
+    
 
 def get_transfer_data(reader, writer):
     transfers = reader["Transfers"].set_index(["Site", "scenario-year"])
@@ -1092,9 +1088,6 @@ for folder in result_folders:
     print(scen, year, ": Getting storage data")
     get_storage_data(reader, writer)
     
-    print(scen, year, ": Getting curtailment data")
-    get_curtailment_data(reader, writer)
-    
     print(scen, year, ": Getting transfer data")
     get_transfer_data(reader, writer)
     
@@ -1127,13 +1120,16 @@ for folder in result_folders:
     df_result = helpdf._result
     df_data = helpdf._data
     
+    print(scen, year, ": Getting curtailment data")
+    get_curtailment_data(reader, writer)
+    
     print(scen, year, ": Getting NTC rents data")
     get_NTC_rents_data(reader, writer, model_type)
     
     # Save results
     writer.save()
     
-for scen in ["base"]:#, "baseCO2", "base+CO2", "base+NTC" ["v1", "v3", "v4", "v13", "v134", "v34"]: #
+for scen in ["base", "baseCO2", "base+CO2", "base+NTC"]:# ["v1", "v3", "v4", "v13", "v134", "v34"]: #
 
     # Read output file
     writer_path = os.path.join("result", subfolder, "URBS_" + scen + ".xlsx")

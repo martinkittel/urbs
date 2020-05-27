@@ -7,6 +7,7 @@ import itertools
 import os
 import urbs
 import time
+import shutil
 
 
 def write_Global(Global, version, model_type, suffix, year, writer):
@@ -350,10 +351,7 @@ def Database_to_urbs(version, model_type, suffix, year, result_folder, time_slic
     
     # Eventually read the results of the previous year
     urbs_path = os.path.join("result", result_folder, "scenario_base.h5")
-    # while not os.path.exists(urbs_path):
-        # print("waiting for the creation of ", urbs_path)
-    
-    # print(urbs_path, "exists")
+
     helpdf = urbs.load(urbs_path)
     df_result = helpdf._result
     df_data = helpdf._data
@@ -377,8 +375,11 @@ def Database_to_urbs(version, model_type, suffix, year, result_folder, time_slic
     #Transmission_prev = pd.read_excel('result' + fs + result_folder + fs + 'scenario_base.xlsx', sheet_name="Transmission caps", index_col=[1,2,3,4])[["New"]]
         
     # Prepare the output
-    book = load_workbook('Input' + fs + version + model_type + fs + str(year) + suffix + '.xlsx')
-    writer = pd.ExcelWriter('Input' + fs + version + model_type + fs + str(year) + suffix + '.xlsx', engine='openpyxl') 
+    layout_path = 'Input' + fs + version + model_type + fs + '2015.xlsx'
+    output_path = 'Input' + fs + version + model_type + fs + str(year) + suffix + '.xlsx'
+    shutil.copyfile(layout_path, output_path)
+    book = load_workbook(output_path)
+    writer = pd.ExcelWriter(output_path, engine='openpyxl') 
     writer.book = book
     writer.sheets = dict((ws.title, ws) for ws in book.worksheets)
     

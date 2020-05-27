@@ -7,6 +7,7 @@ import itertools
 import os
 import urbs
 import time
+import shutil
 
 dict_countries = {"IE": "IEUK",
                   "UK": "IEUK",
@@ -36,6 +37,15 @@ dict_countries = {"IE": "IEUK",
                   "BG": "BGELRO",
                   "EL": "BGELRO",
                   "RO": "BGELRO",
+                  "IEUK": "IEUK",
+                  "BELUNL": "BELUNL",
+                  "DKFINOSE": "DKFINOSE", 
+                  "ESPT": "ESPT",
+                  "ATCH": "ATCH",
+                  "CZPLSK": "CZPLSK",
+                  "EELTLV": "EELTLV",
+                  "HRHUSI": "HRHUSI",
+                  "BGELRO": "BGELRO",
                   }
 
 
@@ -120,6 +130,12 @@ def write_Process(Process, Process_prev, EE_limits, co2_price, version, suffix, 
     for proc in Process["Process"].unique():
         if proc.startswith("Solar_PV"):
             Process.loc[Process["Process"] == proc, "Process"] = proc[:5] + proc[8:]
+    
+    Process_grouped = group_sites(Process).groupby(["Site", "Process"]) \
+                                            .agg({"max-grad": np.mean, "lifetime": np.mean,
+                                                  "inv-cost": np.mean, "fix-cost": np.mean, "var-cost": np.mean,
+                                                  "reliability": np.mean, "cap-credit": np.mean,
+                                                  "depreciation": np.mean})
     Process.set_index(["Site", "Process"], inplace=True)
     
     # Filter possible expansion for that year
@@ -128,7 +144,7 @@ def write_Process(Process, Process_prev, EE_limits, co2_price, version, suffix, 
         
     if year > 2015:
         Process_year["inst-cap"] = 0
-        Process_prev = Process_prev.join(Process["lifetime"], how="inner")
+        Process_prev = Process_prev.join(Process_grouped["lifetime"], how="inner")
         Process_prev['Construction year'] = [int(x[-4:]) for x in Process_prev.index.get_level_values(level='Process')]
         idx_old = Process_prev.loc[(Process_prev['Construction year'] + Process_prev['lifetime']) < year].index
         idx_decommissioned = Process_prev.index.intersection(idx_old)
@@ -136,7 +152,7 @@ def write_Process(Process, Process_prev, EE_limits, co2_price, version, suffix, 
         Process_prev.rename(columns={"Total": "inst-cap"}, inplace=True)
         Process_prev["cap-up"] = Process_prev["inst-cap"]
         Process_prev["cap-lo"] = 0
-        Process_prev = Process_prev.join(Process[['max-grad','inv-cost','fix-cost','var-cost','depreciation','reliability','cap-credit']], how="left")
+        Process_prev = Process_prev.join(Process_grouped[['max-grad','inv-cost','fix-cost','var-cost','depreciation','reliability','cap-credit']], how="left")
         Process_year = pd.concat([Process_year.reset_index(), Process_prev.reset_index()], axis=0, ignore_index=True, sort=True)
         Process_year.set_index(["Site", "Process"], inplace=True)
     
@@ -271,6 +287,12 @@ def write_Storage(Storage, Storage_prev, version, suffix, year, writer):
     # Rename columns
     Storage = Storage.rename(columns={'inv-cost':'inv-cost-p','fix-cost':'fix-cost-p','var-cost':'var-cost-p', 'e-to-p': 'ep-ratio'})
     
+    Storage_grouped = group_sites(Storage.reset_index()).groupby(["Site", "Storage", "Commodity"]) \
+                                            .agg({"eff-in": np.mean, "eff-out": np.mean, "lifetime": np.mean,
+                                                  "inv-cost-p": np.mean, "fix-cost-p": np.mean, "var-cost-p": np.mean,
+                                                  "depreciation": np.mean, "init": np.mean, "reliability": np.mean,
+                                                  "cap-credit": np.mean, "discharge": np.mean, "ep-ratio": np.mean})
+                                            
     # Filter possible expansion for that year
     Storage_year = Storage[Storage['scenario-year']==year]
     Storage_year = Storage_year[Storage_year['cap-up-p']!=0]
@@ -292,7 +314,7 @@ def write_Storage(Storage, Storage_prev, version, suffix, year, writer):
     Storage_year['cap-up-c'] = Storage_year['cap-up-p'] * Storage_year['ep-ratio']
     
     if year > 2015:
-        Storage_prev = Storage_prev.join(Storage[["lifetime", "ep-ratio"]], how="inner")
+        Storage_prev = Storage_prev.join(Storage_grouped[["lifetime", "ep-ratio"]], how="inner")
         Storage_prev['Construction year'] = [int(x[-4:]) for x in Storage_prev.index.get_level_values(level='Storage')]
         idx_old = Storage_prev.loc[(Storage_prev['Construction year'] + Storage_prev['lifetime']) < year].index
         idx_decommissioned = Storage_prev.index.intersection(idx_old)
@@ -306,7 +328,7 @@ def write_Storage(Storage, Storage_prev, version, suffix, year, writer):
         Storage_prev["cap-lo-c"] = 0
         Storage_prev["cap-up-p"] = Storage_prev["inst-cap-p"]
         Storage_prev["cap-lo-p"] = 0
-        Storage_prev = Storage_prev.join(Storage[['eff-in','eff-out','inv-cost-p','fix-cost-p','var-cost-p',
+        Storage_prev = Storage_prev.join(Storage_grouped[['eff-in','eff-out','inv-cost-p','fix-cost-p','var-cost-p',
                                                   'depreciation','init','discharge','cap-credit','reliability']], how="left")
         Storage_year = pd.concat([Storage_year.reset_index(), Storage_prev.reset_index()], axis=0, ignore_index=True, sort=True)
         Storage_year.set_index(["Site", "Storage", "Commodity"], inplace=True)
@@ -322,9 +344,6 @@ def write_Storage(Storage, Storage_prev, version, suffix, year, writer):
     # Last check
     Storage_year = Storage_year[Storage_year['cap-up-p']!=0]
     
-    # Round to 1e-5
-    Storage_year = round(Storage_year, 5)
-    
     # Group sites
     Storage_year = Storage_year.reset_index()
     Storage_year = group_sites(Storage_year).groupby(["Site", "Storage", "Commodity"]) \
@@ -335,13 +354,17 @@ def write_Storage(Storage, Storage_prev, version, suffix, year, writer):
                                                   "fix-cost-c": np.mean, "var-cost-p": np.mean, "var-cost-c": np.mean,
                                                   "wacc": np.mean, "depreciation": np.mean, "init": np.mean, "reliability": np.mean,
                                                   "cap-credit": np.mean, "discharge": np.mean, "ep-ratio": np.mean}) \
-                                            .reset_index()
+                                            .reset_index() \
                                             
-    if year == 2015:
-        Storage_year["ep-ratio"] = (Storage_year["inst-cap-c"] / Storage_year["inst-cap-p"]).round(2)
-        Storage_year['inst-cap-c'] = Storage_year['inst-cap-p'] * Storage_year['ep-ratio']
-        Storage_year['cap-lo-c'] = Storage_year['cap-lo-p'] * Storage_year['ep-ratio']
-        Storage_year['cap-up-c'] = Storage_year['cap-up-p'] * Storage_year['ep-ratio']
+    # Round to 1e-5
+    Storage_year = round(Storage_year, 5)
+    
+    # Adjust according to ep-ratio
+    ind = Storage_year.loc[Storage_year["inst-cap-p"]>0].index
+    Storage_year.loc[ind, "ep-ratio"] = (Storage_year.loc[ind, "inst-cap-c"] / Storage_year.loc[ind, "inst-cap-p"]).round(2)
+    Storage_year['inst-cap-c'] = Storage_year['inst-cap-p'] * Storage_year['ep-ratio']
+    Storage_year['cap-lo-c'] = Storage_year['cap-lo-p'] * Storage_year['ep-ratio']
+    Storage_year['cap-up-c'] = Storage_year['cap-up-p'] * Storage_year['ep-ratio']
     
     # Write
     Storage_year.to_excel(writer, sheet_name='Storage', index=False)
@@ -422,10 +445,7 @@ def Database_to_urbs_grouped(version, model_type, suffix, year, result_folder, t
     
     # Eventually read the results of the previous year
     urbs_path = os.path.join("result", result_folder, "scenario_base.h5")
-    # while not os.path.exists(urbs_path):
-        # print("waiting for the creation of ", urbs_path)
-    
-    # print(urbs_path, "exists")
+
     helpdf = urbs.load(urbs_path)
     df_result = helpdf._result
     df_data = helpdf._data
@@ -449,8 +469,11 @@ def Database_to_urbs_grouped(version, model_type, suffix, year, result_folder, t
     #Transmission_prev = pd.read_excel('result' + fs + result_folder + fs + 'scenario_base.xlsx', sheet_name="Transmission caps", index_col=[1,2,3,4])[["New"]]
         
     # Prepare the output
-    book = load_workbook('Input' + fs + version + model_type + fs + str(year) + suffix + '.xlsx')
-    writer = pd.ExcelWriter('Input' + fs + version + model_type + fs + str(year) + suffix + '.xlsx', engine='openpyxl') 
+    layout_path = 'Input' + fs + version + model_type + fs + '2015.xlsx'
+    output_path = 'Input' + fs + version + model_type + fs + str(year) + suffix + '.xlsx'
+    shutil.copyfile(layout_path, output_path)
+    book = load_workbook(output_path)
+    writer = pd.ExcelWriter(output_path, engine='openpyxl') 
     writer.book = book
     writer.sheets = dict((ws.title, ws) for ws in book.worksheets)
     
