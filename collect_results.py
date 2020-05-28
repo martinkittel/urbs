@@ -11,14 +11,14 @@ global dict_countries
 global dict_season
 
 # User preferences
-model_type = '_short_grouped'
+model_type = '_short'
 if model_type in ['_long', '_long_grouped']:
     time_slices = [i for i in range(8761)]
 else:
     #time_slices = [i for j in (range(1), range(745, 913), range(2905, 3073), range(5089, 5257), range(7297, 7465)) for i in j]
     time_slices = [i for j in (range(1), range(745, 841), range(2905, 3001), range(5089, 5185), range(7297, 7393)) for i in j]
 
-subfolder = "Short 384h 12 regions new"
+subfolder = "Short 384h 28 regions new"
 
 result_folders = [f.name for f in os.scandir(os.path.join("result", subfolder)) if (f.is_dir() and f.name[0]=="v")]
 
@@ -424,7 +424,7 @@ def get_generation_data(reader, writer):
     prod_regions = prod_regions.groupby(["Site", "scenario-year"]).sum(axis=0)
     generation.loc[prod_regions.index, prod_regions.columns] = prod_regions
     generation.loc[prod_regions.index] = generation.loc[prod_regions.index].fillna(0)
-    
+
     generation.round(2).reset_index().to_excel(writer, sheet_name='Electricity generation', index=False)
 
 
@@ -665,7 +665,7 @@ def get_curtailment_data(reader, writer):
     # Update electricity generation table
     generation = reader["Electricity generation"].set_index(["Site", "scenario-year"])
     generation.loc[curtailed.index, curtailed.columns] = generation.loc[curtailed.index, curtailed.columns] - curtailed
-    generation.loc[curtailed_regions.index, curtailed_regions.columns] = generation.loc[curtailed_regions.index, curtailed_regions.columns] - curtailed_regions
+    generation.loc[curtailed_regions.index.difference(curtailed.index), curtailed_regions.columns] = generation.loc[curtailed_regions.index.difference(curtailed.index), curtailed_regions.columns] - curtailed_regions
     generation.round(2).reset_index().to_excel(writer, sheet_name='Electricity generation', index=False)
     
 
@@ -1123,8 +1123,8 @@ for folder in result_folders:
     print(scen, year, ": Getting curtailment data")
     get_curtailment_data(reader, writer)
     
-    print(scen, year, ": Getting NTC rents data")
-    get_NTC_rents_data(reader, writer, model_type)
+    # print(scen, year, ": Getting NTC rents data")
+    # get_NTC_rents_data(reader, writer, model_type)
     
     # Save results
     writer.save()
