@@ -485,7 +485,7 @@ def get_storage_data(reader, writer):
     storage_cap = storage_cap.groupby(["Site", "Storage type", "scenario-year"]).sum()
             
     # Retired capacity (continued)
-    if year_now == 2016:
+    if year_now == 2020:
         storage_cap["retired-cap-p"] = 0
         storage_cap["retired-cap-c"] = 0
     else:
@@ -552,7 +552,7 @@ def get_storage_data(reader, writer):
     storage.loc[storage_in_regions.index, storage_in_regions.columns] = storage_in_regions
 
     storage.round(2).reset_index().to_excel(writer, sheet_name='Storage', index=False)
-    
+
     
 def get_curtailment_data(reader, writer):
     curtailment = reader["Curtailment"]
@@ -577,15 +577,12 @@ def get_curtailment_data(reader, writer):
         import pdb; pdb.set_trace()
         return
     
-    try:
-        curtailed = curtailed.join(prod[["Solar", "Hydro", "Lignite", "Bioenergy"]])
-    except KeyError:
-        curtailed = curtailed.join(prod[["Hydro", "Lignite", "Bioenergy"]])
+    curtailed = curtailed.join(prod[["Solar"]])
     curtailed = curtailed.loc[curtailed["Elec"]>0]
     
-    # Order of curtailment: Solar, WindOn, WindOff, Hydro
+    # Order of curtailment: Solar
     for idx in curtailed.index:
-        for pp in ["Lignite", "Bioenergy", "Hydro", "Solar"]:
+        for pp in ["Solar"]:
             try:
                 curtailed.loc[idx, pp] = min(curtailed.loc[idx, "Elec"], curtailed.loc[idx, pp])
                 curtailed.loc[idx, "Elec"] = curtailed.loc[idx, "Elec"] - curtailed.loc[idx, pp]
@@ -593,16 +590,17 @@ def get_curtailment_data(reader, writer):
                 pass
             
     curtailed = curtailed.drop(columns=["Elec"]).droplevel(2).reset_index().groupby(["Site", "scenario-year"]).sum()
-    curtailed_regions = curtailed.reset_index()
-    curtailed_regions["Site"] = [dict_countries[x] for x in curtailed_regions["Site"]]
-    curtailed_regions = curtailed_regions.groupby(["Site", "scenario-year"]).sum()
     
     # Save results
     curtailment.loc[curtailment["scenario-year"]==year_now] = curtailment.loc[curtailment["scenario-year"]==year_now].fillna(0)
     curtailment = curtailment.set_index(["Site", "scenario-year"])
     curtailment.loc[curtailed.index, curtailed.columns] = curtailed
-    curtailment.loc[curtailed_regions.index, curtailed_regions.columns] = curtailed_regions
     curtailment.round(2).reset_index().to_excel(writer, sheet_name='Curtailment', index=False)
+    
+    # Update electricity generation table
+    generation = reader["Electricity generation"].set_index(["Site", "scenario-year"])
+    generation.loc[curtailed.index, curtailed.columns] = generation.loc[curtailed.index, curtailed.columns] - curtailed
+    generation.round(2).reset_index().to_excel(writer, sheet_name='Electricity generation', index=False)
     
 
 def get_transfer_data(reader, writer):
@@ -1026,9 +1024,6 @@ for folder in result_folders:
     print(scen, year, ": Getting storage data")
     get_storage_data(reader, writer)
     
-    # print(scen, year, ": Getting curtailment data")
-    # get_curtailment_data(reader, writer)
-    
     print(scen, year, ": Getting transfer data")
     get_transfer_data(reader, writer)
     
@@ -1060,6 +1055,9 @@ for folder in result_folders:
     helpdf = urbs.load(urbs_path)
     df_result = helpdf._result
     df_data = helpdf._data
+    
+    print(scen, year, ": Getting curtailment data")
+    get_curtailment_data(reader, writer)
     
     print(scen, year, ": Getting NTC rents data")
     get_NTC_rents_data(reader, writer)
