@@ -11,15 +11,9 @@ global dict_countries
 global dict_season
 
 # User preferences
-result_folders = [
-    # 'v1.00_2020_base-20200520T2030',
-    # 'v1.10_2020_base-20200521T0702',
-    # 'v1.20_2020_base-20200521T0710',
-    # 'v1.30_2020_base-20200521T0730',
-    # 'v1.40_2020_base-20200521T0749',
-    # 'v1.50_2020_base-20200521T0813',
-    'v1.60_2020_base-20200521T0831',
-]
+subfolder = "SunCable"
+
+result_folders = [f.name for f in os.scandir(os.path.join("result", subfolder)) if (f.is_dir() and f.name[0]=="v")]
 
 dict_tech = {"BKOMG1": "Gas",
              "Exxon G3": "Gas",
@@ -69,6 +63,7 @@ dict_tech = {"BKOMG1": "Gas",
              "TUASInciner2": "Waste",
              "Solar_PV": "Solar",
              "Slack": "Slack",
+             "Slack_clean": "Slack",
              }
 
 
@@ -1000,7 +995,7 @@ for folder in result_folders:
     scen = suffix#.upper()
     
     # Read output file
-    writer_path = os.path.join("result", "SunCable", "URBS_" + scen + "_" + version + ".xlsx")
+    writer_path = os.path.join("result", subfolder, "URBS_" + scen + "_" + version + ".xlsx")
     book = load_workbook(writer_path)
     reader = pd.read_excel(writer_path, sheet_name=None)
     writer = pd.ExcelWriter(writer_path, engine='openpyxl') 
@@ -1008,7 +1003,7 @@ for folder in result_folders:
     writer.sheets = dict((ws.title, ws) for ws in book.worksheets)
     
     # Read in results
-    urbs_path = os.path.join("result", "SunCable", folder, "scenario_base.h5")
+    urbs_path = os.path.join("result", subfolder, folder, "scenario_base.h5")
     helpdf = urbs.load(urbs_path)
     df_result = helpdf._result
     df_data = helpdf._data
@@ -1053,7 +1048,7 @@ for folder in result_folders:
     scen = suffix#.upper()
     
     # Read output file
-    writer_path = os.path.join("result", "SunCable", "URBS_" + scen + "_" + version + ".xlsx")
+    writer_path = os.path.join("result", subfolder, "URBS_" + scen + "_" + version + ".xlsx")
     book = load_workbook(writer_path)
     reader = pd.read_excel(writer_path, sheet_name=None)
     writer = pd.ExcelWriter(writer_path, engine='openpyxl') 
@@ -1061,7 +1056,7 @@ for folder in result_folders:
     writer.sheets = dict((ws.title, ws) for ws in book.worksheets)
     
     # Read in results
-    urbs_path = os.path.join("result", "SunCable", folder, "scenario_base.h5")
+    urbs_path = os.path.join("result", subfolder, folder, "scenario_base.h5")
     helpdf = urbs.load(urbs_path)
     df_result = helpdf._result
     df_data = helpdf._data
