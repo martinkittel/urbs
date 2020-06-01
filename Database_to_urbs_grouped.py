@@ -170,12 +170,21 @@ def write_Process(Process, Process_prev, EE_limits, co2_price, version, suffix, 
     # Correct cap-up
     Process_year.loc[Process_year["cap-up"] == -1, "cap-up"] = np.inf
     Process_year.reset_index(inplace=True)
+    
+    Process_year = group_sites(Process_year).groupby(["Site", "Process"]) \
+                                            .agg({"inst-cap": np.sum, "cap-lo": np.sum, "cap-up": np.sum,
+                                                  "max-grad": np.mean, "min-fraction": np.sum,
+                                                  "inv-cost": np.mean, "fix-cost": np.mean, "var-cost": np.mean,
+                                                  "startup-cost": np.mean, "reliability": np.mean, "cap-credit": np.mean,
+                                                  "wacc": np.mean, "depreciation": np.mean, "area-per-cap": np.mean}) \
+                                            .reset_index()
+                                            
     if (year>2015):
         Process_group = Process_year.copy()
         Process_group["Category"] = [x.split("_")[0]+"_"+x.split("_")[-2] for x in Process_group["Process"]]
         Process_group = Process_group[["Site", "Category","inst-cap"]]
         Process_group = Process_group.groupby(["Site", "Category"]).sum()
-        Process_group = Process_group.join(EE_limits["cap-up"], how="right")
+        Process_group = Process_group.join(EE_limits["cap-up"], how="right").fillna(0)
         Process_group["rest-cap-up"] = Process_group["cap-up"] - Process_group["inst-cap"]
         
         idx = Process_year[Process_year["cap-up"] == np.inf].index
@@ -212,14 +221,6 @@ def write_Process(Process, Process_prev, EE_limits, co2_price, version, suffix, 
     
     # Last check
     Process_year = Process_year[Process_year['cap-up']!=0]
-    
-    Process_year = group_sites(Process_year).groupby(["Site", "Process"]) \
-                                            .agg({"inst-cap": np.sum, "cap-lo": np.sum, "cap-up": np.sum,
-                                                  "max-grad": np.mean, "min-fraction": np.sum,
-                                                  "inv-cost": np.mean, "fix-cost": np.mean, "var-cost": np.mean,
-                                                  "startup-cost": np.mean, "reliability": np.mean, "cap-credit": np.mean,
-                                                  "wacc": np.mean, "depreciation": np.mean, "area-per-cap": np.mean}) \
-                                            .reset_index()
     
     # Round to 1e-5
     Process_year["inst-cap"] = round(Process_year["inst-cap"], 5)
@@ -431,7 +432,9 @@ def Database_to_urbs_grouped(version, model_type, suffix, year, result_folder, t
     Site = db['Site'].copy()
     Commodity = db['Commodity'].copy().set_index(["Site", "Commodity", "Type"])
     Process = db['Process'].copy().set_index(["Site", "Process"])
-    EE_limits = db["Cap-Up"].copy().rename(columns={"Country":"Site", "Technology (sum over all vintages)": "Category"}).set_index(["Site", "Category"])
+    EE_limits = db["Cap-Up"].copy().rename(columns={"Country":"Site", "Technology (sum over all vintages)": "Category"})
+    EE_limits = group_sites(EE_limits).groupby(["Site", "Category"]) \
+                                      .agg({"cap-up": np.sum})
     ProCom = db['Process-Commodity'].copy().set_index(["Process"])
     Transmission = db['Transmission'].copy()
     Storage = db['Storage'].copy().set_index(["Site", "Storage", "Commodity"])

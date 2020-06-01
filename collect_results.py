@@ -11,14 +11,14 @@ global dict_countries
 global dict_season
 
 # User preferences
-model_type = '_short'
+model_type = '_long_grouped'
 if model_type in ['_long', '_long_grouped']:
     time_slices = [i for i in range(8761)]
 else:
     #time_slices = [i for j in (range(1), range(745, 913), range(2905, 3073), range(5089, 5257), range(7297, 7465)) for i in j]
     time_slices = [i for j in (range(1), range(745, 841), range(2905, 3001), range(5089, 5185), range(7297, 7393)) for i in j]
 
-subfolder = "Short 384h 28 regions new"
+subfolder = "Long 8760h 12 regions"
 
 result_folders = [f.name for f in os.scandir(os.path.join("result", subfolder)) if (f.is_dir() and f.name[0]=="v")]
 
@@ -1123,27 +1123,27 @@ for folder in result_folders:
     print(scen, year, ": Getting curtailment data")
     get_curtailment_data(reader, writer)
     
-    # print(scen, year, ": Getting NTC rents data")
-    # get_NTC_rents_data(reader, writer, model_type)
+    print(scen, year, ": Getting NTC rents data")
+    get_NTC_rents_data(reader, writer, model_type)
     
     # Save results
     writer.save()
     
-for scen in ["base", "baseCO2", "base+CO2", "base+NTC"]:# ["v1", "v3", "v4", "v13", "v134", "v34"]: #
+# for scen in ["base", "baseCO2", "base+CO2", "base+NTC"]:# ["v1", "v3", "v4", "v13", "v134", "v34"]: #
 
-    # Read output file
-    writer_path = os.path.join("result", subfolder, "URBS_" + scen + ".xlsx")
-    book = load_workbook(writer_path)
-    reader = pd.read_excel(writer_path, sheet_name=None)
-    writer = pd.ExcelWriter(writer_path, engine='openpyxl') 
-    writer.book = book
-    writer.sheets = dict((ws.title, ws) for ws in book.worksheets)
+    # # Read output file
+    # writer_path = os.path.join("result", subfolder, "URBS_" + scen + ".xlsx")
+    # book = load_workbook(writer_path)
+    # reader = pd.read_excel(writer_path, sheet_name=None)
+    # writer = pd.ExcelWriter(writer_path, engine='openpyxl') 
+    # writer.book = book
+    # writer.sheets = dict((ws.title, ws) for ws in book.worksheets)
 
     # print(scen, ": Getting FLH data")
     # get_FLH_data(reader, writer)
     
-    print(scen, ": Getting abatement data")
-    get_abatement(reader, writer)
+    # print(scen, ": Getting abatement data")
+    # get_abatement(reader, writer)
     
-    # Save results
-    writer.save()
+    # # Save results
+    # writer.save()

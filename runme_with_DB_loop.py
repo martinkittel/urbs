@@ -7,7 +7,7 @@ import time
 # # User preferences
 
 version = 'v2.20'
-model_type = '_short'
+model_type = '_long'
 suffix = "_base"
 result_folder = 'v2.20_2015_base-20200527T0742'
 fs = os.path.sep
