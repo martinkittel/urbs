@@ -11,14 +11,14 @@ global dict_countries
 global dict_season
 
 # User preferences
-model_type = '_long_grouped'
+model_type = '_long'
 if model_type in ['_long', '_long_grouped']:
     time_slices = [i for i in range(8761)]
 else:
     #time_slices = [i for j in (range(1), range(745, 913), range(2905, 3073), range(5089, 5257), range(7297, 7465)) for i in j]
     time_slices = [i for j in (range(1), range(745, 841), range(2905, 3001), range(5089, 5185), range(7297, 7393)) for i in j]
 
-subfolder = "Long 8760h 12 regions"
+subfolder = "Long 8760h 28 regions"
 
 result_folders = [f.name for f in os.scandir(os.path.join("result", subfolder)) if (f.is_dir() and f.name[0]=="v")]
 
@@ -997,6 +997,7 @@ def get_cost_data(reader, writer, year_built):
     costs.loc[costs_inv_regions.index, "System costs"] = (costs_fix_regions["costs_fix"] + costs_inv_regions["costs_inv"] + costs_var_regions["costs_var"]) / 10**6
     costs.loc[costs_fix_regions.index, "System fixed costs"] = costs_fix_regions["costs_fix"] / 10**6
     costs.loc[costs_var_regions.index, "System variable costs"] = costs_var_regions["costs_var"] / 10**6
+    
     costs.round(2).reset_index().to_excel(writer, sheet_name='Total system costs', index=False)
     abatement.round(2).reset_index().to_excel(writer, sheet_name='Abatement', index=False)
 
@@ -1129,7 +1130,7 @@ for folder in result_folders:
     # Save results
     writer.save()
     
-# for scen in ["base", "baseCO2", "base+CO2", "base+NTC"]:# ["v1", "v3", "v4", "v13", "v134", "v34"]: #
+# for scen in ["base"]:# ["v1", "v3", "v4", "v13", "v134", "v34"]: #
 
     # # Read output file
     # writer_path = os.path.join("result", subfolder, "URBS_" + scen + ".xlsx")
