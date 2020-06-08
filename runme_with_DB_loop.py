@@ -7,17 +7,17 @@ import time
 # # User preferences
 
 version = 'v2.20'
-model_type = '_long'
-suffix = "_base"
-result_folder = 'v2.20_2015_base-20200527T0742'
+model_type = '_short'
+suffix = "_green"
+result_folder = 'v2.20_2020_green-20200605T2101'
 fs = os.path.sep
 if model_type == '_long':
     time_slices = [i for i in range(8761)]
 else:
-    #time_slices = [i for j in (range(1), range(745, 913), range(2905, 3073), range(5089, 5257), range(7297, 7465)) for i in j]
-    time_slices = [i for j in (range(1), range(745, 841), range(2905, 3001), range(5089, 5185), range(7297, 7393)) for i in j]
+    time_slices = [i for j in (range(1), range(745, 913), range(2905, 3073), range(5089, 5257), range(7297, 7465)) for i in j]
+    #time_slices = [i for j in (range(1), range(745, 841), range(2905, 3001), range(5089, 5185), range(7297, 7393)) for i in j]
 
-for year in [2015, 2020, 2025, 2030, 2035, 2040, 2045, 2050]:
+for year in [2025, 2030, 2035, 2040, 2045, 2050]:
     
     # Generate input file from database
     Database_to_urbs(version, model_type, suffix, year, result_folder, time_slices)
@@ -114,5 +114,5 @@ for year in [2015, 2020, 2025, 2030, 2035, 2040, 2045, 2050]:
                                 report_tuples=report_tuples,
                                 report_sites_name=report_sites_name)
     del prob
-    time.sleep(10*60)
+    time.sleep(5*60)
     
