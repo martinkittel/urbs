@@ -12,7 +12,6 @@ global dict_season
 
 # User preferences
 subfolder = "SunCable"
-
 result_folders = [f.name for f in os.scandir(os.path.join("result", subfolder)) if (f.is_dir() and f.name[0]=="v")]
 
 dict_tech = {"BKOMG1": "Gas",
@@ -364,7 +363,6 @@ def get_generation_data(reader, writer):
     prod = prod.drop(columns=["pro"]).groupby(["Site", "scenario-year", "Technology"]).sum().unstack()[0].fillna(0)
     generation.loc[prod.index, prod.columns] = prod
     generation.loc[prod.index] = generation.loc[prod.index].fillna(0)
-    #import pdb; pdb.set_trace()
     
     prod_regions = prod.reset_index()
     prod_regions["Site"] = [dict_countries[x] for x in prod_regions["Site"]]
@@ -558,7 +556,6 @@ def get_curtailment_data(reader, writer):
     curtailment = reader["Curtailment"]
     
     curtailed = df_result["e_pro_in"].unstack()["Elec"].dropna().droplevel(3).reorder_levels(['sit', 'stf', 't']).sort_index()
-    #import pdb; pdb.set_trace()
     curtailed = add_weight(curtailed)
     curtailed = curtailed.reset_index().rename(columns={"sit": "Site", "stf": "scenario-year"})
     year_now = curtailed["scenario-year"].unique()[0]
@@ -577,12 +574,12 @@ def get_curtailment_data(reader, writer):
         import pdb; pdb.set_trace()
         return
     
-    curtailed = curtailed.join(prod[["Solar"]])
+    curtailed = curtailed.join(prod[["LFO", "Oil", "Gas", "Waste", "Solar"]])
     curtailed = curtailed.loc[curtailed["Elec"]>0]
     
     # Order of curtailment: Solar
     for idx in curtailed.index:
-        for pp in ["Solar"]:
+        for pp in ["LFO", "Oil", "Gas", "Waste", "Solar"]:
             try:
                 curtailed.loc[idx, pp] = min(curtailed.loc[idx, "Elec"], curtailed.loc[idx, pp])
                 curtailed.loc[idx, "Elec"] = curtailed.loc[idx, "Elec"] - curtailed.loc[idx, pp]
@@ -1006,32 +1003,32 @@ for folder in result_folders:
     df_result = helpdf._result
     df_data = helpdf._data
     
-    print(scen, year, ": Getting CO2 data")
-    get_emissions_data(reader, writer)
+    # print(scen, year, ": Getting CO2 data")
+    # get_emissions_data(reader, writer)
     
-    print(scen, year, ": Getting marginal electricity generation data")
-    get_marginal_generation_data(reader, writer)
+    # print(scen, year, ": Getting marginal electricity generation data")
+    # get_marginal_generation_data(reader, writer)
     
-    print(scen, year, ": Getting electricity prices")
-    get_electricity_data(reader, writer, int(year))
+    # print(scen, year, ": Getting electricity prices")
+    # get_electricity_data(reader, writer, int(year))
     
     print(scen, year, ": Getting electricity generation data")
     get_generation_data(reader, writer)
     
-    print(scen, year, ": Getting total, new and retired capacities data")
-    get_capacities_data(reader, writer)
+    # print(scen, year, ": Getting total, new and retired capacities data")
+    # get_capacities_data(reader, writer)
     
-    print(scen, year, ": Getting storage data")
-    get_storage_data(reader, writer)
+    # print(scen, year, ": Getting storage data")
+    # get_storage_data(reader, writer)
     
-    print(scen, year, ": Getting transfer data")
-    get_transfer_data(reader, writer)
+    # print(scen, year, ": Getting transfer data")
+    # get_transfer_data(reader, writer)
     
-    print(scen, year, ": Getting NTC data")
-    get_NTC_data(reader, writer)
+    # print(scen, year, ": Getting NTC data")
+    # get_NTC_data(reader, writer)
     
-    print(scen, year, ": Getting system cost data")
-    get_cost_data(reader, writer, int(year))
+    # print(scen, year, ": Getting system cost data")
+    # get_cost_data(reader, writer, int(year))
     
     # Save results
     writer.save()
@@ -1059,8 +1056,8 @@ for folder in result_folders:
     print(scen, year, ": Getting curtailment data")
     get_curtailment_data(reader, writer)
     
-    print(scen, year, ": Getting NTC rents data")
-    get_NTC_rents_data(reader, writer)
+    # print(scen, year, ": Getting NTC rents data")
+    # get_NTC_rents_data(reader, writer)
     
     print(scen, year, ": Getting abatement data")
     get_abatement(reader, writer)
