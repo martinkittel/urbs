@@ -19,7 +19,14 @@ scenario_years = [2020]
 def group_technologies(list_tech):
     grouped_tech = {}
     for elem in list_tech:
-        grouped_tech[elem] = elem
+        if elem in ["Shunt", "Slack_clean"]:
+            grouped_tech[elem] = elem
+        elif elem == "Senoko_Energy_ST":
+            grouped_tech[elem] = "Oil_ST"
+        elif elem.split("_")[-1] in ["PV", "WTE"]:
+            grouped_tech[elem] = elem.split("_")[-1]
+        else:
+            grouped_tech[elem] = "Gas_" + elem.split("_")[-1]
     return grouped_tech
 
 def group_seasons():
@@ -725,10 +732,11 @@ def get_NTC_rents_data(urbs_results):
             tra_out.loc[idx, "Site"] = tra_out.loc[idx, "Site Out"]
             tra_out.loc[idx, "Site Out"] = aux
             tra_out.loc[idx, "rent"] = - tra_out.loc[idx, "rent"]
-    try:
-        tra_out = tra_out.drop(index=idx_drop).groupby(["Site", "scenario-year", "Site Out"]).sum().unstack()["rent"]
-    except:
-        import pdb; pdb.set_trace()
+    
+    tra_out = tra_out.drop(index=idx_drop)
+    if len(tra_out)==0:
+        return urbs_results
+    tra_out = tra_out.groupby(["Site", "scenario-year", "Site Out"]).sum().unstack()["rent"]
     NTC_rents.loc[tra_out.index, tra_out.columns] = tra_out
     urbs_results["NTC rents"] = NTC_rents.round(2).reset_index()
     
@@ -902,7 +910,7 @@ def get_cost_data(urbs_results, year_built):
         storage["Annualized inv costs"] = (storage["cap_sto_p_new"] * storage["inv-cost-p"] + storage["cap_sto_c_new"] * storage["inv-cost-c"]) * storage["invcost-factor"] # alt for intertemporal: 'overpay-factor'
         storage["horizon"] = (2055 - year_built) / (storage["depreciation"] + 5)
         storage.loc[storage["horizon"]>1, "horizon"] = 1
-        storage["Annualized inv costs (incl. past)"] = (storage["inst-cap-p"] * storage["inv-cost-p"] + storage["inst-cap-c"] * storage["inv-cost-c"]) * storage["active"] * process["invcost-factor"]
+        storage["Annualized inv costs (incl. past)"] = (storage["inst-cap-p"] * storage["inv-cost-p"] + storage["inst-cap-c"] * storage["inv-cost-c"]) * storage["active"] * storage["invcost-factor"]
         storage["Annualized inv costs (incl. past, till horizon)"] = storage["Annualized inv costs (incl. past)"] * storage["horizon"]
         
     if "transmission" in locals():
@@ -946,7 +954,7 @@ def get_cost_data(urbs_results, year_built):
     # Report costs
     costs.loc[process.index, ["Fix costs", "Variable costs", "Fuel costs", "Environmental costs", "Annualized inv costs", "Annualized inv costs (incl. past)", "Annualized inv costs (incl. past, till horizon)"]] = costs.loc[process.index, ["Fix costs", "Variable costs", "Fuel costs", "Environmental costs", "Annualized inv costs", "Annualized inv costs (incl. past)", "Annualized inv costs (incl. past, till horizon)"]] + process.loc[process.index, ["Fix costs", "Variable costs", "Fuel costs", "Environmental costs", "Annualized inv costs", "Annualized inv costs (incl. past)", "Annualized inv costs (incl. past, till horizon)"]]
     if "storage" in locals():
-        costs.loc[storage.index, ["Fix costs", "Variable costs", "Annualized inv costs", "Annualized inv costs (incl. past)", "Annualized inv costs (incl. past, till horizon)"]] = costs.loc[stoarge.index, ["Fix costs", "Variable costs", "Annualized inv costs", "Annualized inv costs (incl. past)", "Annualized inv costs (incl. past, till horizon)"]] + storage[["Fix costs", "Variable costs", "Annualized inv costs", "Annualized inv costs (incl. past)", "Annualized inv costs (incl. past, till horizon)"]]
+        costs.loc[storage.index, ["Fix costs", "Variable costs", "Annualized inv costs", "Annualized inv costs (incl. past)", "Annualized inv costs (incl. past, till horizon)"]] = costs.loc[storage.index, ["Fix costs", "Variable costs", "Annualized inv costs", "Annualized inv costs (incl. past)", "Annualized inv costs (incl. past, till horizon)"]] + storage[["Fix costs", "Variable costs", "Annualized inv costs", "Annualized inv costs (incl. past)", "Annualized inv costs (incl. past, till horizon)"]]
     if "transmission" in locals():
         costs.loc[transmission_1.index, ["Fix costs", "Variable costs", "Annualized inv costs", "Annualized inv costs (incl. past)", "Annualized inv costs (incl. past, till horizon)"]] = costs.loc[transmission_1.index, ["Fix costs", "Variable costs", "Annualized inv costs", "Annualized inv costs (incl. past)", "Annualized inv costs (incl. past, till horizon)"]] + transmission_1[["Fix costs", "Variable costs", "Annualized inv costs", "Annualized inv costs (incl. past)", "Annualized inv costs (incl. past, till horizon)"]]
         costs.loc[transmission_2.index, ["Fix costs", "Variable costs", "Annualized inv costs", "Annualized inv costs (incl. past)", "Annualized inv costs (incl. past, till horizon)"]] = costs.loc[transmission_2.index, ["Fix costs", "Variable costs", "Annualized inv costs", "Annualized inv costs (incl. past)", "Annualized inv costs (incl. past, till horizon)"]] + transmission_2[["Fix costs", "Variable costs", "Annualized inv costs", "Annualized inv costs (incl. past)", "Annualized inv costs (incl. past, till horizon)"]] 
@@ -1077,7 +1085,7 @@ for folder in result_folders:
     urbs_results = get_NTC_data(urbs_results)
     
     print(scen, year, ": Getting system cost data")
-    #urbs_results = get_cost_data(urbs_results, int(year))
+    urbs_results = get_cost_data(urbs_results, int(year))
     
     # Save results
     for sheet in urbs_results.keys():
