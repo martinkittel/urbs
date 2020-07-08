@@ -14,7 +14,7 @@ global dict_season
 subfolder = "SunCable"
 result_folders = [f.name for f in os.scandir(os.path.join("result", subfolder)) if (f.is_dir() and f.name[0]=="v")]
 
-scenario_years = [2020]
+scenario_years = [2019, 2030]
 
 def group_technologies(list_tech):
     grouped_tech = {}
@@ -55,9 +55,9 @@ def group_sites(list_sites):
     grouped_sites = {}
     for elem in list_sites:
         if elem != "Singapore":
-            grouped_sites[elem] = "AUS"
+            grouped_sites[elem] = "total_AUS"
         else:
-            grouped_sites[elem] = "SGP"
+            grouped_sites[elem] = "total_SGP"
     return grouped_sites
     
         
@@ -151,6 +151,11 @@ def get_emissions_data(urbs_results):
     aux_process = filter.loc[filter["Commodity"]=="CO2", "Process"].tolist()
     pro_com = filter.loc[(filter["Process"].isin(aux_process)) & (filter["Direction"] == "In"), ["Process", "Commodity"]].set_index("Process")["Commodity"].to_dict()
     emissions_by_fuel = pd.DataFrame(0, index=multiindex, columns=list(set(pro_com.values())))
+    if "Emissions" in urbs_results.keys():
+        urbs_results["Emissions"].set_index(["Site", "scenario-year"], inplace=True)
+        urbs_results["Emissions by fuel"].set_index(["Site", "scenario-year"], inplace=True)
+        emissions.loc[urbs_results["Emissions"].index] = urbs_results["Emissions"]
+        emissions_by_fuel.loc[urbs_results["Emissions by fuel"].index] = urbs_results["Emissions by fuel"]
     
     co2 = df_result["e_pro_out"].unstack()['CO2'].reorder_levels(['sit', 'stf', 'pro', 't']).sort_index().fillna(0)
     co2 = add_weight(co2)
@@ -210,27 +215,31 @@ def get_emissions_data(urbs_results):
         pass
     
     # CCS_CO2
-    if year == "2020":
-        emissions.loc[co2.index, "CO2 captured (Mt)"] = 0
-        emissions.loc[co2_regions.index, "CO2 captured (Mt)"] = 0
-    # else:
-        # try:
-            # ccs_co2 = df_result["e_pro_out"].unstack()['CCS_CO2'].fillna(0)
-            # ccs_co2 = add_weight(ccs_co2)
-            # ccs_co2 = ccs_co2.droplevel([0,3]).reorder_levels(['sit', 'stf']).sort_index()
-            # ccs_co2 = ccs_co2.reset_index().rename(columns={"sit":"Site", "stf": "scenario-year"}).groupby(["Site", "scenario-year"]).sum() # unit: t_CO2
-            # emissions.loc[ccs_co2.index, "CO2 captured (Mt)"] = ccs_co2["CCS_CO2"]
-            
-            # ccs_co2_regions = ccs_co2.reset_index()
-            # ccs_co2_regions["Site"] = [dict_countries[x] for x in ccs_co2_regions["Site"]]
-            # ccs_co2_regions = ccs_co2_regions.groupby(["Site", "scenario-year"]).sum(axis=0)
-            # emissions.loc[ccs_co2_regions.index, "CO2 captured (Mt)"] = ccs_co2_regions["CCS_CO2"]
-        # except KeyError:
-            # pass
+    emissions.loc[co2.index, "CO2 captured (Mt)"] = 0
+    emissions.loc[co2_regions.index, "CO2 captured (Mt)"] = 0
+    try:
+        ccs_co2 = df_result["e_pro_out"].unstack()['CCS_CO2'].fillna(0)
+        ccs_co2 = add_weight(ccs_co2)
+        ccs_co2 = ccs_co2.droplevel([0,3]).reorder_levels(['sit', 'stf']).sort_index()
+        ccs_co2 = ccs_co2.reset_index().rename(columns={"sit":"Site", "stf": "scenario-year"}).groupby(["Site", "scenario-year"]).sum() # unit: t_CO2
+        emissions.loc[ccs_co2.index, "CO2 captured (Mt)"] = ccs_co2["CCS_CO2"]
+        
+        ccs_co2_regions = ccs_co2.reset_index()
+        ccs_co2_regions["Site"] = [dict_countries[x] for x in ccs_co2_regions["Site"]]
+        ccs_co2_regions = ccs_co2_regions.groupby(["Site", "scenario-year"]).sum(axis=0)
+        emissions.loc[ccs_co2_regions.index, "CO2 captured (Mt)"] = ccs_co2_regions["CCS_CO2"]
+    except KeyError:
+        pass
             
     # Save results
-    urbs_results["Emissions"] = emissions.astype("float").round(2).reset_index()
-    urbs_results["Emissions by fuel"] = emissions_by_fuel.round(2).reset_index()
+    emissions.dropna(inplace=True)
+    emissions_by_fuel.dropna(inplace=True)
+    
+    urbs_results["Emissions"] = emissions.astype("float").round(2)
+    urbs_results["Emissions by fuel"] = emissions_by_fuel.round(2)
+    # Sort index
+    urbs_results["Emissions"] = urbs_results["Emissions"].sort_index(level="scenario-year")
+    urbs_results["Emissions by fuel"] = urbs_results["Emissions by fuel"].sort_index(level="scenario-year")
     return urbs_results
     
     
@@ -242,7 +251,7 @@ def get_electricity_data(urbs_results, year_built):
     electricity = pd.DataFrame(index=multiindex, columns=list_cols)
     
     # Prepare dataframe of hourly prices
-    multiindex = pd.MultiIndex.from_product([range(1,8761), scenario_years], names=["Hour", "scenario-year"])
+    multiindex = pd.MultiIndex.from_product([range(1,8761), [int(year)]], names=["Hour", "scenario-year"])
     hourly_prices = pd.DataFrame(index=multiindex, columns=report_sites)
     
     # Get cost factor
@@ -323,8 +332,24 @@ def get_electricity_data(urbs_results, year_built):
     hourly_prices.loc[prices_h_regions.index, prices_h_regions.columns] = prices_h_regions * cost_factor
     
     # Save results
-    urbs_results["Electricity"] = electricity.astype("float").round(2).reset_index()
-    urbs_results["Hourly prices"] = hourly_prices.round(2).reset_index()
+    electricity.dropna(inplace=True)
+    hourly_prices.dropna(inplace=True)
+    if "Electricity" in urbs_results.keys():
+        urbs_results["Electricity"].set_index(["Site", "scenario-year"], inplace=True)
+        urbs_results["Hourly prices"].set_index(["Hour", "scenario-year"], inplace=True)
+        try: # Update values in sheet
+            urbs_results["Electricity"].loc[electricity.index] = electricity.astype("float").round(2)
+            urbs_results["Hourly prices"].loc[hourly_prices.index] = hourly_prices.round(2)
+        except: # Append values in sheet
+            urbs_results["Electricity"] = urbs_results["Electricity"].append(electricity.astype("float").round(2))
+            urbs_results["Hourly prices"] = urbs_results["Hourly prices"].append(hourly_prices.round(2))
+    else: # Create sheet
+        urbs_results["Electricity"] = electricity.astype("float").round(2)
+        urbs_results["Hourly prices"] = hourly_prices.round(2)
+    # Sort index
+    urbs_results["Electricity"] = urbs_results["Electricity"].sort_index(level="scenario-year")
+    urbs_results["Hourly prices"] = urbs_results["Hourly prices"].sort_index(level="scenario-year")
+    
     return urbs_results
     
 
@@ -337,6 +362,9 @@ def get_generation_data(urbs_results):
     aux_process = filter.loc[(filter["Commodity"]=="Elec") & (filter["Direction"] == "Out"), "Process"].tolist()
     dict_tech = group_technologies(aux_process)
     generation = pd.DataFrame(0, index=multiindex, columns=sorted(list(set(dict_tech.values()))))
+    if "Electricity generation" in urbs_results.keys():
+        urbs_results["Electricity generation"].set_index(["Site", "scenario-year"], inplace=True)
+        generation.loc[urbs_results["Electricity generation"].index.intersection(generation.index)] = urbs_results["Electricity generation"]
     
     prod = df_result["e_pro_out"].unstack()['Elec'].reorder_levels(['sit', 'stf', 'pro', 't']).sort_index().fillna(0)
     prod = add_weight(prod)
@@ -357,7 +385,12 @@ def get_generation_data(urbs_results):
     generation.loc[prod_regions.index, prod_regions.columns] = prod_regions
     generation.loc[prod_regions.index] = generation.loc[prod_regions.index].fillna(0)
     
-    urbs_results["Electricity generation"] = generation.round(2).reset_index()
+    # Save results
+    generation.dropna(inplace=True)
+    urbs_results["Electricity generation"] = generation.round(2)
+    # Sort index
+    urbs_results["Electricity generation"] = urbs_results["Electricity generation"].sort_index(level="scenario-year")
+    
     return urbs_results
 
 
@@ -369,9 +402,16 @@ def get_capacities_data(urbs_results):
     filter = df_data["process_commodity"].reset_index()
     aux_process = filter.loc[(filter["Commodity"]=="Elec") & (filter["Direction"] == "Out"), "Process"].tolist()
     dict_tech = group_technologies(aux_process)
-    capacities_total = pd.DataFrame(0, index=multiindex, columns=sorted(list(set(dict_tech.values()))))
-    capacities_new = pd.DataFrame(0, index=multiindex, columns=sorted(list(set(dict_tech.values()))))
-    capacities_retired = pd.DataFrame(0, index=multiindex, columns=sorted(list(set(dict_tech.values()))))
+    capacities_total = pd.DataFrame(index=multiindex, columns=sorted(list(set(dict_tech.values()))))
+    capacities_new = pd.DataFrame(index=multiindex, columns=sorted(list(set(dict_tech.values()))))
+    capacities_retired = pd.DataFrame(index=multiindex, columns=sorted(list(set(dict_tech.values()))))
+    if "Installed capacities" in urbs_results.keys():
+        urbs_results["Installed capacities"].set_index(["Site", "scenario-year"], inplace=True)
+        urbs_results["Added capacities"].set_index(["Site", "scenario-year"], inplace=True)
+        urbs_results["Retired capacities"].set_index(["Site", "scenario-year"], inplace=True)
+        capacities_total.loc[urbs_results["Installed capacities"].index] = urbs_results["Installed capacities"]
+        capacities_new.loc[urbs_results["Added capacities"].index] = urbs_results["Added capacities"]
+        capacities_retired.loc[urbs_results["Retired capacities"].index] = urbs_results["Retired capacities"]
     
     # New capacities
     cap_new = df_result["cap_pro_new"].reset_index().rename(columns={"stf": "scenario-year", "sit":"Site", "pro":"Process", "cap_pro_new":"inst-cap"})
@@ -415,11 +455,12 @@ def get_capacities_data(urbs_results):
     capacities_total.loc[cap_total_regions.index, cap_total_regions.columns] = cap_total_regions
     
     # Retired capacity (continued)
-    if year_now == 2020:
+    if year_now == stf_min:
         capacities_retired.loc[cap_total.index, :] = 0
         capacities_retired.loc[cap_total_regions.index, :] = 0
     else:
-        index_past = pd.MultiIndex.from_product([[*dict_countries], [year_now-5]], names=["Site", "scenario-year"])
+        year_past = scenario_years[scenario_years.index(year_now) - 1]
+        index_past = pd.MultiIndex.from_product([[*dict_countries], [year_past]], names=["Site", "scenario-year"])
         cap_total_past = capacities_total.loc[index_past].stack().reset_index().rename(columns={"level_2": "Technology", 0:"inst-cap-past"})
         cap_total_past["scenario-year"] = year_now
         cap_total_past = cap_total_past.set_index(["Site", "scenario-year", "Technology"])
@@ -438,9 +479,19 @@ def get_capacities_data(urbs_results):
         capacities_retired.loc[cap_retired_regions.index, cap_retired_regions.columns] = cap_retired_regions
     
     # Save results
-    urbs_results["Installed capacities"] = capacities_total.round(2).reset_index()
-    urbs_results["Added capacities"] = capacities_new.round(2).reset_index()
-    urbs_results["Capacities retired"] = capacities_retired.round(2).reset_index()
+    capacities_total.dropna(inplace=True)
+    capacities_new.dropna(inplace=True)
+    capacities_retired.dropna(inplace=True)
+    
+    urbs_results["Installed capacities"] = capacities_total.round(2)
+    urbs_results["Added capacities"] = capacities_new.round(2)
+    urbs_results["Retired capacities"] = capacities_retired.round(2)
+
+    # Sort index
+    urbs_results["Installed capacities"] = urbs_results["Installed capacities"].sort_index(level="scenario-year")
+    urbs_results["Added capacities"] = urbs_results["Added capacities"].sort_index(level="scenario-year")
+    urbs_results["Retired capacities"] = urbs_results["Retired capacities"].sort_index(level="scenario-year")
+    
     return urbs_results
 
 
@@ -454,7 +505,7 @@ def get_storage_data(urbs_results):
     multiindex = pd.MultiIndex.from_product([report_sites, storage_types, scenario_years], names=["Site", "Storage type", "scenario-year"])
     
     # Prepare dataframe of storage
-    storage = pd.DataFrame(0, index=multiindex, columns=["inst-cap-p", "new-inst-cap-p", "retired-cap-p", "inst-cap-c", "new-inst-cap-c", "retired-cap-c", "avg-state-of-charge", "full-load cycles", "stored-energy"])
+    storage = pd.DataFrame(index=multiindex, columns=["inst-cap-p", "new-inst-cap-p", "retired-cap-p", "inst-cap-c", "new-inst-cap-c", "retired-cap-c", "avg-state-of-charge", "full-load cycles", "stored-energy"])
     
     try:
         # New capacities
@@ -490,11 +541,12 @@ def get_storage_data(urbs_results):
     storage_cap = storage_cap.groupby(["Site", "Storage type", "scenario-year"]).sum()
             
     # Retired capacity (continued)
-    if year_now == 2020:
+    if year_now == stf_min:
         storage_cap["retired-cap-p"] = 0
         storage_cap["retired-cap-c"] = 0
     else:
-        index_past = pd.MultiIndex.from_product([[*dict_countries], storage_types, [year_now-5]], names=["Site", "Storage type", "scenario-year"])
+        year_past = scenario_years[scenario_years.index(year_now) - 1]
+        index_past = pd.MultiIndex.from_product([[*dict_countries], storage_types, [year_past]], names=["Site", "Storage type", "scenario-year"])
         cap_p_past = storage.loc[index_past, "inst-cap-p"].fillna(0).reset_index().rename(columns={"inst-cap-p": "retired-cap-p"})
         cap_c_past = storage.loc[index_past, "inst-cap-c"].fillna(0).reset_index().rename(columns={"inst-cap-c": "retired-cap-c"})
         cap_p_past["scenario-year"] = year_now
@@ -555,8 +607,20 @@ def get_storage_data(urbs_results):
     storage.loc[storage_con_regions.index, storage_con_regions.columns] = storage_con_regions
     storage.loc[storage_in.index, storage_in.columns] = storage_in
     storage.loc[storage_in_regions.index, storage_in_regions.columns] = storage_in_regions
-
-    urbs_results["Storage"] = storage.round(2).reset_index()
+    
+    # Save results
+    storage.dropna(inplace=True)
+    if "Storage" in urbs_results.keys():
+        urbs_results["Storage"].set_index(["Site", "Storage type", "scenario-year"], inplace=True)
+        try: # Update values in sheet
+            urbs_results["Storage"].loc[storage.index] = storage.round(2)
+        except: # Append values in sheet
+            urbs_results["Storage"] = urbs_results["Storage"].append(storage.round(2))
+    else: # Create sheet
+        urbs_results["Storage"] = storage.round(2)
+    # Sort index
+    urbs_results["Storage"] = urbs_results["Storage"].sort_index(level="scenario-year")
+    
     return urbs_results
     
     
@@ -610,12 +674,24 @@ def get_curtailment_data(urbs_results):
     curtailed_regions = curtailed_regions.groupby(["Site", "scenario-year"]).sum()
     
     # Save results
-    curtailment = pd.DataFrame(0, index=multiindex, columns=list_columns).reset_index()
+    curtailment = pd.DataFrame(index=multiindex, columns=list_columns).reset_index()
     curtailment.loc[curtailment["scenario-year"]==year_now] = curtailment.loc[curtailment["scenario-year"]==year_now].fillna(0)
     curtailment = curtailment.set_index(["Site", "scenario-year"])
     curtailment.loc[curtailed.index, curtailed.columns] = curtailed
     curtailment.loc[curtailed_regions.index, curtailed_regions.columns] = curtailed_regions
-    urbs_results["Curtailment"] = curtailment.round(2).reset_index()
+    
+    # Save results
+    curtailment.dropna(inplace=True)
+    if "Curtailment" in urbs_results.keys():
+        urbs_results["Curtailment"].set_index(["Site", "scenario-year"], inplace=True)
+        try: # Update values in sheet
+            urbs_results["Curtailment"].loc[curtailment.index] = curtailment.round(2)
+        except: # Append values in sheet
+            urbs_results["Curtailment"] = urbs_results["Curtailment"].append(curtailment.round(2))
+    else: # Create sheet
+        urbs_results["Curtailment"] = curtailment.round(2)
+    # Sort index
+    urbs_results["Curtailment"] = urbs_results["Curtailment"].sort_index(level="scenario-year")
     
     return urbs_results
     
@@ -623,7 +699,7 @@ def get_curtailment_data(urbs_results):
 def get_transfer_data(urbs_results):
     """
     """
-    multiindex = pd.MultiIndex.from_product([report_sites, scenario_years], names=["Site", "scenario-year"])
+    multiindex = pd.MultiIndex.from_product([report_sites, [int(year)]], names=["Site", "scenario-year"])
     # Prepare dataframe of electricity transfer
     transfers = pd.DataFrame(index=multiindex, columns=report_sites)
     
@@ -650,7 +726,19 @@ def get_transfer_data(urbs_results):
     
     transfers.loc[tra_out.index, tra_out.columns] = tra_out
     transfers.loc[tra_out_regions.index, tra_out_regions.columns] = tra_out_regions
-    urbs_results["Transfers"] = transfers.round(2).reset_index()
+    
+    # Save results
+    transfers.dropna(inplace=True)
+    if "Transfers" in urbs_results.keys():
+        urbs_results["Transfers"].set_index(["Site", "scenario-year"], inplace=True)
+        try: # Update values in sheet
+            urbs_results["Transfers"].loc[transfers.index] = transfers.round(2)
+        except: # Append values in sheet
+            urbs_results["Transfers"] = urbs_results["Transfers"].append(transfers.round(2))
+    else: # Create sheet
+        urbs_results["Transfers"] = transfers.round(2)
+    # Sort index
+    urbs_results["Transfers"] = urbs_results["Transfers"].sort_index(level="scenario-year")
     
     return urbs_results
     
@@ -658,7 +746,7 @@ def get_transfer_data(urbs_results):
 def get_NTC_data(urbs_results):
     """
     """
-    multiindex = pd.MultiIndex.from_product([report_sites, scenario_years], names=["Site", "scenario-year"])
+    multiindex = pd.MultiIndex.from_product([report_sites, [int(year)]], names=["Site", "scenario-year"])
     # Prepare dataframe of electricity net transfer capacities
     NTC = pd.DataFrame(index=multiindex, columns=report_sites)
     
@@ -686,7 +774,19 @@ def get_NTC_data(urbs_results):
     
     NTC.loc[ntc_inst.index, ntc_inst.columns] = ntc_inst
     NTC.loc[ntc_inst_regions.index, ntc_inst_regions.columns] = ntc_inst_regions
-    urbs_results["NTC"] = NTC.round(2).reset_index()
+    
+    # Save results
+    NTC.dropna(inplace=True)
+    if "NTC" in urbs_results.keys():
+        urbs_results["NTC"].set_index(["Site", "scenario-year"], inplace=True)
+        try: # Update values in sheet
+            urbs_results["NTC"].loc[NTC.index] = NTC.round(2)
+        except: # Append values in sheet
+            urbs_results["NTC"] = urbs_results["NTC"].append(NTC.round(2))
+    else: # Create sheet
+        urbs_results["NTC"] = NTC.round(2)
+    # Sort index
+    urbs_results["NTC"] = urbs_results["NTC"].sort_index(level="scenario-year")
     
     return urbs_results
     
@@ -694,11 +794,11 @@ def get_NTC_data(urbs_results):
 def get_NTC_rents_data(urbs_results):
     """
     """
-    multiindex = pd.MultiIndex.from_product([report_sites, scenario_years], names=["Site", "scenario-year"])
+    multiindex = pd.MultiIndex.from_product([report_sites, [int(year)]], names=["Site", "scenario-year"])
     # Prepare dataframe of NTC rents
     NTC_rents = pd.DataFrame(index=multiindex, columns=report_sites)
 
-    hourly_prices = urbs_results["Hourly prices"].rename(columns={"Hour":"t", "Year":"scenario-year"}).fillna(0)
+    hourly_prices = urbs_results["Hourly prices"].reset_index().rename(columns={"Hour":"t", "Year":"scenario-year"}).fillna(0)
     hourly_prices = hourly_prices.set_index(["t", "scenario-year"]).stack().reset_index()
     
     prices_site = hourly_prices.rename(columns={"level_2": "Site"}).set_index(["t", "scenario-year", "Site"])
@@ -740,6 +840,19 @@ def get_NTC_rents_data(urbs_results):
     NTC_rents.loc[tra_out.index, tra_out.columns] = tra_out
     urbs_results["NTC rents"] = NTC_rents.round(2).reset_index()
     
+    # Save results
+    NTC_rents.dropna(inplace=True)
+    if "NTC rents" in urbs_results.keys():
+        urbs_results["NTC rents"].set_index(["Site", "scenario-year"], inplace=True)
+        try: # Update values in sheet
+            urbs_results["NTC rents"].loc[NTC_rents.index] = NTC_rents.round(2)
+        except: # Append values in sheet
+            urbs_results["NTC rents"] = urbs_results["NTC rents"].append(NTC_rents.round(2))
+    else: # Create sheet
+        urbs_results["NTC rents"] = NTC_rents.round(2)
+    # Sort index
+    urbs_results["NTC rents"] = urbs_results["NTC rents"].sort_index(level="scenario-year")
+    
     return urbs_results
 
 
@@ -771,15 +884,14 @@ def get_cost_data(urbs_results, year_built):
     """
     description
     """
-    multiindex = pd.MultiIndex.from_product([report_sites, scenario_years], names=["Site", "scenario-year"])
+    multiindex = pd.MultiIndex.from_product([report_sites, [int(year)]], names=["Site", "scenario-year"])
     # Prepare dataframe of costs
     costs = pd.DataFrame(0, index=multiindex, columns=["Fix costs", "Variable costs", "Fuel costs", "Environmental costs",
                                                     "Annualized inv costs", "Annualized inv costs (incl. past)", "Annualized inv costs (incl. past, till horizon)",
                                                     "Annualized total costs", "Annualized total costs (incl. past)", "Annualized costs (incl. past, till horizon)"])
     
     # Get helping factors
-    stf_min = 2020
-    if year_built > 2020:
+    if year_built > stf_min:
         discount = 0 #df_data["global_prop"].droplevel(0).loc["Discount rate", "value"]
     else:
         discount = 0
@@ -881,18 +993,25 @@ def get_cost_data(urbs_results, year_built):
     if "transmission" in locals():
         transmission['active'] = 0
         
-    if year_built > 2020:
-        process['Construction year'] = 2020
+    if year_built > stf_min:
+        process['Construction year'] = stf_min
         for ind in process.index:
-            if "Shunt" not in ind:
+            try:
                 process.loc[ind, "Construction year"] = int(ind[2][-4:])
-        process.loc[process['Construction year']<=2020, 'Construction year'] = 1900
+            except:
+                pass
+        process.loc[process['Construction year']<=stf_min, 'Construction year'] = 1900
         process['active'] = (process['Construction year'] + process['depreciation'] + 5) >= year_built
         process["active"] = [int(x) for x in process["active"]]
         
         if "storage" in locals():
-            storage['Construction year'] = [int(x[-4:]) for x in storage.index.get_level_values(level='Storage')]
-            storage.loc[storage['Construction year']<=2020, 'Construction year'] = 1900
+            storage['Construction year'] = stf_min
+            for ind in storage.index:
+                try:
+                    storage.loc[ind, 'Construction year'] = int(ind[2][-4:])
+                except:
+                    pass
+            storage.loc[storage['Construction year']<=stf_min, 'Construction year'] = 1900
             storage['active'] = (storage['Construction year'] + storage['depreciation'] + 5 - year_built) / 5
             storage.loc[storage["active"] > 1, "active"] = 1
             
@@ -969,7 +1088,18 @@ def get_cost_data(urbs_results, year_built):
     costs_regions = costs_regions.groupby(["Site", "scenario-year"]).sum()
     costs.loc[costs_regions.index] = costs_regions
     
-    urbs_results["System costs"] = costs.round(2).reset_index()
+    # Save results
+    costs.dropna(inplace=True)
+    if "System costs" in urbs_results.keys():
+        urbs_results["System costs"].set_index(["Site", "scenario-year"], inplace=True)
+        try: # Update values in sheet
+            urbs_results["System costs"].loc[costs.index] = costs.round(2)
+        except: # Append values in sheet
+            urbs_results["System costs"] = urbs_results["System costs"].append(costs.round(2))
+    else: # Create sheet
+        urbs_results["System costs"] = costs.round(2)
+    # Sort index
+    urbs_results["System costs"] = urbs_results["System costs"].sort_index(level="scenario-year")
     
     return urbs_results
 
@@ -1001,7 +1131,7 @@ def get_abatement(urbs_results):
     """
     description
     """
-    simpleindex = pd.Index(scenario_years + ["total"], name="scenario-year")
+    simpleindex = pd.Index(scenario_years, name="scenario-year")
     # Prepare dataframe of abatement
     abatement = pd.DataFrame(index=simpleindex, columns=["Fix costs", "Variable costs", "Fuel costs", "Environmental costs",
                                                     "Annualized inv costs", "Annualized inv costs (incl. past)", "Annualized inv costs (incl. past, till horizon)",
@@ -1009,35 +1139,46 @@ def get_abatement(urbs_results):
                                                     "CO2 emissions (Mt)"])
 
     # Emissions
-    emissions = urbs_results["Emissions by fuel"].set_index(["Site"])
+    emissions = urbs_results["Emissions by fuel"].reset_index().set_index(["Site"])
     emissions = emissions.loc[dict_countries.keys()].reset_index()
     emissions = emissions.drop(columns=["Site"]).set_index(["scenario-year"]).sum(axis=1).reset_index().groupby("scenario-year").sum()
     
     # System costs
-    costs = urbs_results["System costs"].set_index(["Site"])
+    costs = urbs_results["System costs"].reset_index().set_index(["Site"])
     costs = costs.loc[dict_countries.keys()].reset_index().drop(columns=["Site"]).groupby(["scenario-year"]).sum()
     
     # Fill Abatement sheet
     abatement.loc[emissions.index, "CO2 emissions (Mt)"] = emissions[0]
     abatement.loc[costs.index, ["Fix costs", "Variable costs", "Fuel costs", "Environmental costs", "Annualized inv costs", "Annualized inv costs (incl. past)", "Annualized inv costs (incl. past, till horizon)", "Annualized total costs", "Annualized total costs (incl. past)", "Annualized costs (incl. past, till horizon)"]] = costs / 10**6
     
-    #abatement.loc["total"] = abatement.loc[emissions.index].sum() * 5 - 4 * abatement.loc[2016]
+    # Save results
+    abatement.dropna(inplace=True)
+    if "Abatement" in urbs_results.keys():
+        urbs_results["Abatement"].set_index(["scenario-year"], inplace=True)
+        try: # Update values in sheet
+            urbs_results["Abatement"].loc[abatement.index] = abatement.round(2)
+        except: # Append values in sheet
+            urbs_results["Abatement"] = urbs_results["Abatement"].append(abatement.round(2))
+    else: # Create sheet
+        urbs_results["Abatement"] = abatement.round(2)
+    # Sort index
+    urbs_results["Abatement"] = urbs_results["Abatement"].sort_index()
+    # Calculate total
+    urbs_results["Abatement"].loc["total"] = urbs_results["Abatement"].iloc[0]
+    for ind in range(1, len(urbs_results["Abatement"])-1):
+        n_years = urbs_results["Abatement"].iloc[ind].index - urbs_results["Abatement"].iloc[ind-1].index
+        urbs_results["Abatement"].loc["total"] = urbs_results["Abatement"].loc["total"] + urbs_results["Abatement"].iloc[ind] * n_years
     
-    urbs_results["Abatement"] = abatement.round(2).reset_index()
     return urbs_results
 
 # Read in data for all scenarios
 for folder in result_folders:
-    #version = folder.split("-")[0].split("_")[0]
-    #year = folder.split("-")[0].split("_")[1]
-    #suffix = folder.split("-")[0].split("_")[2]
-    #scen = suffix#.upper()
-    year = "2020"
-    scen = "base"
-    stf_min = 2020
+    version = "2019-2030" #folder.split("-")[0].split("_")[0]
+    scen = folder.split("-")[0].split("_")[1]
+    stf_min = 2019
     
     # Read output file
-    writer_path = os.path.join("result", subfolder, "URBS_" + scen + ".xlsx")
+    writer_path = os.path.join("result", subfolder, "URBS_" + scen + "_" + version + ".xlsx")
     writer = pd.ExcelWriter(writer_path, engine='openpyxl') 
     
     # Read in results
@@ -1045,6 +1186,7 @@ for folder in result_folders:
     helpdf = urbs.load(urbs_path)
     df_result = helpdf._result
     df_data = helpdf._data
+    year = str(int(df_data["global_prop"].index.get_level_values(0)[0]))
     
     if os.path.exists(writer_path):
         urbs_results = pd.read_excel(writer_path, sheet_name=None)
@@ -1088,28 +1230,28 @@ for folder in result_folders:
     urbs_results = get_cost_data(urbs_results, int(year))
     
     # Save results
-    for sheet in urbs_results.keys():
-        urbs_results[sheet].to_excel(writer, sheet_name=sheet, index=False, header=True)
+    for sheet in list(urbs_results.keys()):
+        if len(urbs_results[sheet]):
+            urbs_results[sheet].to_excel(writer, sheet_name=sheet, index=True, header=True)
+        else:
+            urbs_results.pop(sheet)
     writer.save()
     
     
 for folder in result_folders:
-    #version = folder.split("-")[0].split("_")[0]
-    #year = folder.split("-")[0].split("_")[1]
-    #suffix = folder.split("-")[0].split("_")[2]
-    #scen = suffix#.upper()
-    year = "2020"
-    scen = "base"
     
-    print(scen, year, ": Getting NTC rents data")
+    print("Getting NTC rents data")
     urbs_results = get_NTC_rents_data(urbs_results)
     
     # Save results
-    for sheet in urbs_results.keys():
-        urbs_results[sheet].to_excel(writer, sheet_name=sheet, index=False, header=True)
+    for sheet in list(urbs_results.keys()):
+        if len(urbs_results[sheet]):
+            urbs_results[sheet].to_excel(writer, sheet_name=sheet, index=True, header=True)
+        else:
+            urbs_results.pop(sheet)
     writer.save()
     
-for scen in ["base"]:#, "base+CO2", "baseCO2", "base+NTC"]: #["v1", "v3", "v4", "v13", "v134", "v34"]: #
+for scen in ["base"]:#, "base+CO2", "baseCO2", "base+NTC"]:
 
     # print(scen, ": Getting FLH data")
     # get_FLH_data(reader, writer)
@@ -1118,6 +1260,9 @@ for scen in ["base"]:#, "base+CO2", "baseCO2", "base+NTC"]: #["v1", "v3", "v4", 
     urbs_results = get_abatement(urbs_results)
     
     # Save results
-    for sheet in urbs_results.keys():
-        urbs_results[sheet].to_excel(writer, sheet_name=sheet, index=False, header=True)
+    for sheet in list(urbs_results.keys()):
+        if len(urbs_results[sheet]):
+            urbs_results[sheet].to_excel(writer, sheet_name=sheet, index=True, header=True)
+        else:
+            urbs_results.pop(sheet)
     writer.save()
