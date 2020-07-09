@@ -232,8 +232,8 @@ def get_emissions_data(urbs_results):
         pass
             
     # Save results
-    emissions.dropna(inplace=True)
-    emissions_by_fuel.dropna(inplace=True)
+    emissions.fillna(0, inplace=True)
+    emissions_by_fuel.fillna(0, inplace=True)
     
     urbs_results["Emissions"] = emissions.astype("float").round(2)
     urbs_results["Emissions by fuel"] = emissions_by_fuel.round(2)
@@ -332,8 +332,8 @@ def get_electricity_data(urbs_results, year_built):
     hourly_prices.loc[prices_h_regions.index, prices_h_regions.columns] = prices_h_regions * cost_factor
     
     # Save results
-    electricity.dropna(inplace=True)
-    hourly_prices.dropna(inplace=True)
+    electricity.fillna(0, inplace=True)
+    hourly_prices.fillna(0, inplace=True)
     if "Electricity" in urbs_results.keys():
         urbs_results["Electricity"].set_index(["Site", "scenario-year"], inplace=True)
         urbs_results["Hourly prices"].set_index(["Hour", "scenario-year"], inplace=True)
@@ -386,7 +386,7 @@ def get_generation_data(urbs_results):
     generation.loc[prod_regions.index] = generation.loc[prod_regions.index].fillna(0)
     
     # Save results
-    generation.dropna(inplace=True)
+    generation.fillna(0, inplace=True)
     urbs_results["Electricity generation"] = generation.round(2)
     # Sort index
     urbs_results["Electricity generation"] = urbs_results["Electricity generation"].sort_index(level="scenario-year")
@@ -479,9 +479,9 @@ def get_capacities_data(urbs_results):
         capacities_retired.loc[cap_retired_regions.index, cap_retired_regions.columns] = cap_retired_regions
     
     # Save results
-    capacities_total.dropna(inplace=True)
-    capacities_new.dropna(inplace=True)
-    capacities_retired.dropna(inplace=True)
+    capacities_total.fillna(0, inplace=True)
+    capacities_new.fillna(0, inplace=True)
+    capacities_retired.fillna(0, inplace=True)
     
     urbs_results["Installed capacities"] = capacities_total.round(2)
     urbs_results["Added capacities"] = capacities_new.round(2)
@@ -609,7 +609,7 @@ def get_storage_data(urbs_results):
     storage.loc[storage_in_regions.index, storage_in_regions.columns] = storage_in_regions
     
     # Save results
-    storage.dropna(inplace=True)
+    storage.fillna(0, inplace=True)
     if "Storage" in urbs_results.keys():
         urbs_results["Storage"].set_index(["Site", "Storage type", "scenario-year"], inplace=True)
         try: # Update values in sheet
@@ -681,7 +681,7 @@ def get_curtailment_data(urbs_results):
     curtailment.loc[curtailed_regions.index, curtailed_regions.columns] = curtailed_regions
     
     # Save results
-    curtailment.dropna(inplace=True)
+    curtailment.fillna(0, inplace=True)
     if "Curtailment" in urbs_results.keys():
         urbs_results["Curtailment"].set_index(["Site", "scenario-year"], inplace=True)
         try: # Update values in sheet
@@ -728,7 +728,7 @@ def get_transfer_data(urbs_results):
     transfers.loc[tra_out_regions.index, tra_out_regions.columns] = tra_out_regions
     
     # Save results
-    transfers.dropna(inplace=True)
+    transfers.fillna(0, inplace=True)
     if "Transfers" in urbs_results.keys():
         urbs_results["Transfers"].set_index(["Site", "scenario-year"], inplace=True)
         try: # Update values in sheet
@@ -776,7 +776,7 @@ def get_NTC_data(urbs_results):
     NTC.loc[ntc_inst_regions.index, ntc_inst_regions.columns] = ntc_inst_regions
     
     # Save results
-    NTC.dropna(inplace=True)
+    NTC.fillna(0, inplace=True)
     if "NTC" in urbs_results.keys():
         urbs_results["NTC"].set_index(["Site", "scenario-year"], inplace=True)
         try: # Update values in sheet
@@ -841,7 +841,7 @@ def get_NTC_rents_data(urbs_results):
     urbs_results["NTC rents"] = NTC_rents.round(2).reset_index()
     
     # Save results
-    NTC_rents.dropna(inplace=True)
+    NTC_rents.fillna(0, inplace=True)
     if "NTC rents" in urbs_results.keys():
         urbs_results["NTC rents"].set_index(["Site", "scenario-year"], inplace=True)
         try: # Update values in sheet
@@ -1089,7 +1089,7 @@ def get_cost_data(urbs_results, year_built):
     costs.loc[costs_regions.index] = costs_regions
     
     # Save results
-    costs.dropna(inplace=True)
+    costs.fillna(0, inplace=True)
     if "System costs" in urbs_results.keys():
         urbs_results["System costs"].set_index(["Site", "scenario-year"], inplace=True)
         try: # Update values in sheet
@@ -1248,6 +1248,7 @@ for folder in result_folders:
         if len(urbs_results[sheet]):
             urbs_results[sheet].to_excel(writer, sheet_name=sheet, index=True, header=True)
         else:
+            print(sheet, "has been removed")
             urbs_results.pop(sheet)
     writer.save()
     
