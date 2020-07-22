@@ -11,14 +11,14 @@ global dict_countries
 global dict_season
 
 # User preferences
-model_type = '_short'
+model_type = '_long_grouped'
 if model_type in ['_long', '_long_grouped']:
     time_slices = [i for i in range(8761)]
 else:
     #time_slices = [i for j in (range(1), range(745, 913), range(2905, 3073), range(5089, 5257), range(7297, 7465)) for i in j]
     time_slices = [i for j in (range(1), range(745, 841), range(2905, 3001), range(5089, 5185), range(7297, 7393)) for i in j]
 
-subfolder = "Short 384h 28 regions"#"Long 8760h 28 regions"
+subfolder = "Long 8760h 12 regions"#"Long 8760h 28 regions"
 
 result_folders = [f.name for f in os.scandir(os.path.join("result", subfolder)) if (f.is_dir() and f.name[0]=="v")]
 
@@ -891,13 +891,13 @@ def get_cost_data(reader, writer, year_built):
             if "Shunt" not in ind:
                 process.loc[ind, "Construction year"] = int(ind[2][-4:])
         process.loc[process['Construction year']<=2015, 'Construction year'] = 1900
-        process['active'] = (process['Construction year'] + process['depreciation'] + 5) >= year_built
+        process['active'] = (process['Construction year'] + process['depreciation'] - 5) >= year_built
         process["active"] = [int(x) for x in process["active"]]
         
         if "storage" in locals():
             storage['Construction year'] = [int(x[-4:]) for x in storage.index.get_level_values(level='Storage')]
             storage.loc[storage['Construction year']<=2015, 'Construction year'] = 1900
-            storage['active'] = (storage['Construction year'] + storage['depreciation'] + 5 - year_built) / 5
+            storage['active'] = (storage['Construction year'] + storage['depreciation'] - 5 - year_built) / 5
             storage.loc[storage["active"] > 1, "active"] = 1
             
         # To do: add transmission
@@ -1035,7 +1035,7 @@ for folder in result_folders:
     scen = suffix#.upper()
     
     # Read output file
-    writer_path = os.path.join("result", subfolder, "URBS_" + scen + ".xlsx")
+    writer_path = os.path.join("result", subfolder, "OYM12-U_" + scen + ".xlsx")
     book = load_workbook(writer_path)
     reader = pd.read_excel(writer_path, sheet_name=None)
     writer = pd.ExcelWriter(writer_path, engine='openpyxl') 
@@ -1048,29 +1048,29 @@ for folder in result_folders:
     df_result = helpdf._result
     df_data = helpdf._data
     
-    print(scen, year, ": Getting CO2 data")
-    get_emissions_data(reader, writer)
+    # print(scen, year, ": Getting CO2 data")
+    # get_emissions_data(reader, writer)
     
-    print(scen, year, ": Getting marginal electricity generation data")
-    get_marginal_generation_data(reader, writer)
+    # print(scen, year, ": Getting marginal electricity generation data")
+    # get_marginal_generation_data(reader, writer)
     
-    print(scen, year, ": Getting electricity prices")
-    get_electricity_data(reader, writer, int(year))
+    # print(scen, year, ": Getting electricity prices")
+    # get_electricity_data(reader, writer, int(year))
     
-    print(scen, year, ": Getting electricity generation data")
-    get_generation_data(reader, writer)
+    # print(scen, year, ": Getting electricity generation data")
+    # get_generation_data(reader, writer)
     
-    print(scen, year, ": Getting total, new and retired capacities data")
-    get_capacities_data(reader, writer)
+    # print(scen, year, ": Getting total, new and retired capacities data")
+    # get_capacities_data(reader, writer)
     
-    print(scen, year, ": Getting storage data")
-    get_storage_data(reader, writer)
+    # print(scen, year, ": Getting storage data")
+    # get_storage_data(reader, writer)
     
-    print(scen, year, ": Getting transfer data")
-    get_transfer_data(reader, writer)
+    # print(scen, year, ": Getting transfer data")
+    # get_transfer_data(reader, writer)
     
-    print(scen, year, ": Getting NTC data")
-    get_NTC_data(reader, writer)
+    # print(scen, year, ": Getting NTC data")
+    # get_NTC_data(reader, writer)
     
     print(scen, year, ": Getting system cost data")
     get_cost_data(reader, writer, int(year))
@@ -1078,50 +1078,50 @@ for folder in result_folders:
     # Save results
     writer.save()
     
-for folder in result_folders:
-    version = folder.split("-")[0].split("_")[0]
-    year = folder.split("-")[0].split("_")[1]
-    suffix = folder.split("-")[0].split("_")[2]
-    scen = suffix#.upper()
+# for folder in result_folders:
+    # version = folder.split("-")[0].split("_")[0]
+    # year = folder.split("-")[0].split("_")[1]
+    # suffix = folder.split("-")[0].split("_")[2]
+    # scen = suffix#.upper()
     
-    # Read output file
-    writer_path = os.path.join("result", subfolder, "URBS_" + scen + ".xlsx")
-    book = load_workbook(writer_path)
-    reader = pd.read_excel(writer_path, sheet_name=None)
-    writer = pd.ExcelWriter(writer_path, engine='openpyxl') 
-    writer.book = book
-    writer.sheets = dict((ws.title, ws) for ws in book.worksheets)
+    # # Read output file
+    # writer_path = os.path.join("result", subfolder, "URBS_" + scen + ".xlsx")
+    # book = load_workbook(writer_path)
+    # reader = pd.read_excel(writer_path, sheet_name=None)
+    # writer = pd.ExcelWriter(writer_path, engine='openpyxl') 
+    # writer.book = book
+    # writer.sheets = dict((ws.title, ws) for ws in book.worksheets)
     
-    # Read in results
-    urbs_path = os.path.join("result", subfolder, folder, "scenario_base.h5")
-    helpdf = urbs.load(urbs_path)
-    df_result = helpdf._result
-    df_data = helpdf._data
+    # # Read in results
+    # urbs_path = os.path.join("result", subfolder, folder, "scenario_base.h5")
+    # helpdf = urbs.load(urbs_path)
+    # df_result = helpdf._result
+    # df_data = helpdf._data
     
-    print(scen, year, ": Getting curtailment data")
-    get_curtailment_data(reader, writer)
+    # print(scen, year, ": Getting curtailment data")
+    # get_curtailment_data(reader, writer)
     
-    print(scen, year, ": Getting NTC rents data")
-    get_NTC_rents_data(reader, writer, model_type)
+    # print(scen, year, ": Getting NTC rents data")
+    # get_NTC_rents_data(reader, writer, model_type)
     
-    # Save results
-    writer.save()
+    # # Save results
+    # writer.save()
     
-for scen in ["base"]:# ["v1", "v3", "v4", "v13", "v134", "v34"]: #
+# for scen in ["base"]:# ["v1", "v3", "v4", "v13", "v134", "v34"]: #
 
-    # Read output file
-    writer_path = os.path.join("result", subfolder, "URBS_" + scen + ".xlsx")
-    book = load_workbook(writer_path)
-    reader = pd.read_excel(writer_path, sheet_name=None)
-    writer = pd.ExcelWriter(writer_path, engine='openpyxl') 
-    writer.book = book
-    writer.sheets = dict((ws.title, ws) for ws in book.worksheets)
+    # # Read output file
+    # writer_path = os.path.join("result", subfolder, "URBS_" + scen + ".xlsx")
+    # book = load_workbook(writer_path)
+    # reader = pd.read_excel(writer_path, sheet_name=None)
+    # writer = pd.ExcelWriter(writer_path, engine='openpyxl') 
+    # writer.book = book
+    # writer.sheets = dict((ws.title, ws) for ws in book.worksheets)
 
-    print(scen, ": Getting FLH data")
-    get_FLH_data(reader, writer)
+    # print(scen, ": Getting FLH data")
+    # get_FLH_data(reader, writer)
     
-    print(scen, ": Getting abatement data")
-    get_abatement(reader, writer)
+    # print(scen, ": Getting abatement data")
+    # get_abatement(reader, writer)
     
-    # Save results
-    writer.save()
+    # # Save results
+    # writer.save()
