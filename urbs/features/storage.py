@@ -260,6 +260,7 @@ def def_cap_credit_storage(m, stf, sit, com):
     return cap_credit
 
 
+
 # storage balance
 def storage_balance(m, tm, stf, sit, com):
     """called in commodity balance
