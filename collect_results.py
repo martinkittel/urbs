@@ -11,10 +11,10 @@ global dict_countries
 global dict_season
 
 # User preferences
-subfolder = "SunCable"
-result_folders = [f.name for f in os.scandir(os.path.join("result", subfolder)) if (f.is_dir() and f.name[0]=="v")]
-
+result_folder = os.path.join("result", "SunCable", "v3.0-20200904T0054")
+version = "v3.00"
 scenario_years = [2019, 2030]
+stf_min = 2019
 
 def group_technologies(list_tech):
     grouped_tech = {}
@@ -1171,32 +1171,41 @@ def get_abatement(urbs_results):
     
     return urbs_results
 
+    
 # Read in data for all scenarios
-for folder in result_folders:
-    version = "2019-2030" #folder.split("-")[0].split("_")[0]
-    scen = folder.split("-")[0].split("_")[1]
-    stf_min = 2019
+list_files = [f.name for f in os.scandir(result_folder) if f.name[-3:]==".h5"]
+
+for result_file in list_files:
+    
+    year = result_file[:-3].split("_")[1]
+    scen = "_".join(result_file[:-3].split("_")[2:])
     
     # Read output file
-    writer_path = os.path.join("result", subfolder, "URBS_" + scen + "_" + version + ".xlsx")
+    if year == "2019":
+        writer_path = os.path.abspath(os.path.join(result_folder, os.pardir, "URBS_" + version + "_" + year + ".xlsx"))
+    else:
+        writer_path = os.path.abspath(os.path.join(result_folder, os.pardir, "URBS_" + version + "_" + scen + ".xlsx"))
     writer = pd.ExcelWriter(writer_path, engine='openpyxl') 
     
     # Read in results
-    urbs_path = os.path.join("result", subfolder, folder, "scenario_base.h5")
+    urbs_path = os.path.join(result_folder, result_file)
     helpdf = urbs.load(urbs_path)
     df_result = helpdf._result
     df_data = helpdf._data
-    year = str(int(df_data["global_prop"].index.get_level_values(0)[0]))
-    
-    if os.path.exists(writer_path):
-        urbs_results = pd.read_excel(writer_path, sheet_name=None)
-    else:
-        urbs_results = {}
     
     # Get dictionaries and list of sites to be used in the report
     dict_season = group_seasons()
     dict_countries = group_sites(df_data["site"].reset_index()["Name"].tolist())
     report_sites = sorted(list(set(dict_countries.keys()))) + sorted(list(set(dict_countries.values())))
+    
+    if os.path.exists(writer_path):
+        urbs_results = pd.read_excel(writer_path, sheet_name=None)
+    else:
+        writer_path_initial = os.path.abspath(os.path.join(result_folder, os.pardir, "URBS_" + version + "_" + year + ".xlsx"))
+        if os.path.exists(writer_path_initial):
+            urbs_results = pd.read_excel(writer_path_initial, sheet_name=None)
+        else:
+            urbs_results = {}
     
     ### SHEETS ###
     print(scen, year, ": Getting CO2 data")
@@ -1238,32 +1247,32 @@ for folder in result_folders:
     writer.save()
     
     
-for folder in result_folders:
+# for result_file in list_files:
     
-    print("Getting NTC rents data")
-    urbs_results = get_NTC_rents_data(urbs_results)
+    # print("Getting NTC rents data")
+    # urbs_results = get_NTC_rents_data(urbs_results)
     
-    # Save results
-    for sheet in list(urbs_results.keys()):
-        if len(urbs_results[sheet]):
-            urbs_results[sheet].to_excel(writer, sheet_name=sheet, index=True, header=True)
-        else:
-            print(sheet, "has been removed")
-            urbs_results.pop(sheet)
-    writer.save()
+    # # Save results
+    # for sheet in list(urbs_results.keys()):
+        # if len(urbs_results[sheet]):
+            # urbs_results[sheet].to_excel(writer, sheet_name=sheet, index=True, header=True)
+        # else:
+            # print(sheet, "has been removed")
+            # urbs_results.pop(sheet)
+    # writer.save()
     
-for scen in ["base"]:#, "base+CO2", "baseCO2", "base+NTC"]:
+# for scen in ["base"]:#, "base+CO2", "baseCO2", "base+NTC"]:
 
-    # print(scen, ": Getting FLH data")
-    # get_FLH_data(reader, writer)
+    # # print(scen, ": Getting FLH data")
+    # # get_FLH_data(reader, writer)
     
-    print(scen, ": Getting abatement data")
-    urbs_results = get_abatement(urbs_results)
+    # print(scen, ": Getting abatement data")
+    # urbs_results = get_abatement(urbs_results)
     
-    # Save results
-    for sheet in list(urbs_results.keys()):
-        if len(urbs_results[sheet]):
-            urbs_results[sheet].to_excel(writer, sheet_name=sheet, index=True, header=True)
-        else:
-            urbs_results.pop(sheet)
-    writer.save()
+    # # Save results
+    # for sheet in list(urbs_results.keys()):
+        # if len(urbs_results[sheet]):
+            # urbs_results[sheet].to_excel(writer, sheet_name=sheet, index=True, header=True)
+        # else:
+            # urbs_results.pop(sheet)
+    # writer.save()
