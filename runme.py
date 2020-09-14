@@ -3,7 +3,7 @@ import shutil
 import urbs
 
 
-input_files = 'Sin-Aus-urbs_v3.0.xlsx'  # for single year file name, for intertemporal folder name
+input_files = 'Sin-Aus-urbs_v4.0.xlsx'  # for single year file name, for intertemporal folder name
 input_dir = os.path.join('Input', 'SunCable')
 input_path = os.path.join(input_dir, input_files)
 
@@ -53,27 +53,27 @@ for country, color in my_colors.items():
 
 # select scenarios to be run
 scenarios = [
-             urbs.scenario_2019,
+             # urbs.scenario_2019,
              urbs.scenario_2030_base,
-             # imports
-             urbs.scenario_2030_no_imports,
-             urbs.scenario_2030_10pc_imports,
-             urbs.scenario_2030_30pc_imports,
-             urbs.scenario_2030_40pc_imports,
-             # solar efficiency
-             urbs.scenario_2030_50pc_solar_efficiency,
-             urbs.scenario_2030_65pc_solar_efficiency,
-             urbs.scenario_2030_70pc_solar_efficiency,
-             urbs.scenario_2030_80pc_solar_efficiency,
-             urbs.scenario_2030_85pc_solar_efficiency,
-             urbs.scenario_2030_100pc_solar_efficiency,
-             # cable length
-             urbs.scenario_2030_0km_cable,
-             urbs.scenario_2030_1000km_cable,
-             urbs.scenario_2030_2000km_cable,
-             urbs.scenario_2030_3000km_cable,
-             urbs.scenario_2030_4000km_cable,
-             urbs.scenario_2030_5000km_cable,
+             # # imports
+             # urbs.scenario_2030_imports_00pc,
+             # urbs.scenario_2030_imports_10pc,
+             # urbs.scenario_2030_imports_30pc,
+             # urbs.scenario_2030_imports_40pc,
+             # # solar efficiency
+             # urbs.scenario_2030_solar_eff_050pc,
+             # urbs.scenario_2030_solar_eff_065pc,
+             # urbs.scenario_2030_solar_eff_070pc,
+             # urbs.scenario_2030_solar_eff_080pc,
+             # urbs.scenario_2030_solar_eff_085pc,
+             # urbs.scenario_2030_solar_eff_100pc,
+             # # cable length
+             # urbs.scenario_2030_cable_0000km,
+             # urbs.scenario_2030_cable_1000km,
+             # urbs.scenario_2030_cable_2000km,
+             # urbs.scenario_2030_cable_3000km,
+             # urbs.scenario_2030_cable_4000km,
+             # urbs.scenario_2030_cable_5000km,
             ]
 
 for scenario in scenarios:

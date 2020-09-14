@@ -11,8 +11,8 @@ global dict_countries
 global dict_season
 
 # User preferences
-result_folder = os.path.join("result", "SunCable", "v3.0-20200904T0054")
-version = "v3.00"
+result_folder = os.path.join("result", "SunCable", "v4.0-20200911T1359")
+version = "v4.00"
 scenario_years = [2019, 2030]
 stf_min = 2019
 
@@ -30,22 +30,13 @@ def group_technologies(list_tech):
     return grouped_tech
 
 def group_seasons():
-    dict_season = {}
-    # # Europe
-    # for t in range(0, 8761):
-        # if (t <= 2184) or (t>=7897):
-            # dict_season[t] = "winter"
-        # elif (t <= 6552) and (t>=3529):
-            # dict_season[t] = "summer"
-        # else:
-            # dict_season[t] = "midseason"
-         
-    # Laos / Mekong?
+    dict_season = {}  
+    # Singapore
     for t in range(0, 8761):
-        if (t <= 3528) or (t>=8017):
-            dict_season[t] = "monsoon"
+        if (t <= 1416) or (t>=5833):
+            dict_season[t] = "wet (SIN)"
         else:
-            dict_season[t] = "dry"
+            dict_season[t] = "dry (SIN)"
     return dict_season
         
         
@@ -186,6 +177,7 @@ def get_emissions_data(urbs_results):
                 emissions_by_fuel.loc[co2.index, pro_com[pro]] = emissions_by_fuel.loc[co2.index, pro_com[pro]] - co2_neg[pro]
             except:
                 pass
+        print("flag")
     except KeyError:
         pass
     
@@ -235,8 +227,8 @@ def get_emissions_data(urbs_results):
     emissions.fillna(0, inplace=True)
     emissions_by_fuel.fillna(0, inplace=True)
     
-    urbs_results["Emissions"] = emissions.astype("float").round(2)
-    urbs_results["Emissions by fuel"] = emissions_by_fuel.round(2)
+    urbs_results["Emissions"] = emissions.astype("float").round(2).copy()
+    urbs_results["Emissions by fuel"] = emissions_by_fuel.round(2).copy()
     # Sort index
     urbs_results["Emissions"] = urbs_results["Emissions"].sort_index(level="scenario-year")
     urbs_results["Emissions by fuel"] = urbs_results["Emissions by fuel"].sort_index(level="scenario-year")
@@ -251,8 +243,14 @@ def get_electricity_data(urbs_results, year_built):
     electricity = pd.DataFrame(index=multiindex, columns=list_cols)
     
     # Prepare dataframe of hourly prices
-    multiindex = pd.MultiIndex.from_product([range(1,8761), [int(year)]], names=["Hour", "scenario-year"])
+    multiindex = pd.MultiIndex.from_product([range(1,8761), scenario_years], names=["Hour", "scenario-year"])
     hourly_prices = pd.DataFrame(index=multiindex, columns=report_sites)
+    
+    if "Electricity" in urbs_results.keys():
+        urbs_results["Electricity"].set_index(["Site", "scenario-year"], inplace=True)
+        electricity.loc[urbs_results["Electricity"].index.intersection(electricity.index)] = urbs_results["Electricity"]
+        urbs_results["Hourly prices"].set_index(["Hour", "scenario-year"], inplace=True)
+        hourly_prices.loc[urbs_results["Hourly prices"].index.intersection(hourly_prices.index)] = urbs_results["Hourly prices"]
     
     # Get cost factor
     if year_built > stf_min:
@@ -334,18 +332,8 @@ def get_electricity_data(urbs_results, year_built):
     # Save results
     electricity.fillna(0, inplace=True)
     hourly_prices.fillna(0, inplace=True)
-    if "Electricity" in urbs_results.keys():
-        urbs_results["Electricity"].set_index(["Site", "scenario-year"], inplace=True)
-        urbs_results["Hourly prices"].set_index(["Hour", "scenario-year"], inplace=True)
-        try: # Update values in sheet
-            urbs_results["Electricity"].loc[electricity.index] = electricity.astype("float").round(2)
-            urbs_results["Hourly prices"].loc[hourly_prices.index] = hourly_prices.round(2)
-        except: # Append values in sheet
-            urbs_results["Electricity"] = urbs_results["Electricity"].append(electricity.astype("float").round(2))
-            urbs_results["Hourly prices"] = urbs_results["Hourly prices"].append(hourly_prices.round(2))
-    else: # Create sheet
-        urbs_results["Electricity"] = electricity.astype("float").round(2)
-        urbs_results["Hourly prices"] = hourly_prices.round(2)
+    urbs_results["Electricity"] = electricity.astype("float").round(2)
+    urbs_results["Hourly prices"] = hourly_prices.round(2)
     # Sort index
     urbs_results["Electricity"] = urbs_results["Electricity"].sort_index(level="scenario-year")
     urbs_results["Hourly prices"] = urbs_results["Hourly prices"].sort_index(level="scenario-year")
@@ -409,18 +397,18 @@ def get_capacities_data(urbs_results):
         urbs_results["Installed capacities"].set_index(["Site", "scenario-year"], inplace=True)
         urbs_results["Added capacities"].set_index(["Site", "scenario-year"], inplace=True)
         urbs_results["Retired capacities"].set_index(["Site", "scenario-year"], inplace=True)
-        capacities_total.loc[urbs_results["Installed capacities"].index] = urbs_results["Installed capacities"]
-        capacities_new.loc[urbs_results["Added capacities"].index] = urbs_results["Added capacities"]
-        capacities_retired.loc[urbs_results["Retired capacities"].index] = urbs_results["Retired capacities"]
+        capacities_total.loc[urbs_results["Installed capacities"].index] = urbs_results["Installed capacities"][capacities_total.columns]
+        capacities_new.loc[urbs_results["Added capacities"].index] = urbs_results["Added capacities"][capacities_new.columns]
+        capacities_retired.loc[urbs_results["Retired capacities"].index] = urbs_results["Retired capacities"][capacities_retired.columns]
     
     # New capacities
     cap_new = df_result["cap_pro_new"].reset_index().rename(columns={"stf": "scenario-year", "sit":"Site", "pro":"Process", "cap_pro_new":"inst-cap"})
     cap_new["Technology"] = cap_new["Process"]
     for pro in cap_new["Process"].index:
-        if cap_new["Process"][pro] in ["Slack", "Shunt"]:
-            cap_new.drop(index=pro, inplace=True)
+        try:
+            cap_new.loc[pro, "Technology"] = dict_tech[cap_new.loc[pro, "Technology"]]
+        except:
             continue
-        cap_new.loc[pro, "Technology"] = dict_tech[cap_new.loc[pro, "Technology"]]
     cap_new = cap_new.drop(columns=["Process"]).groupby(["Site", "scenario-year", "Technology"]).sum()
     cap_new_regions = cap_new.reset_index()
     cap_new_regions["Site"] = [dict_countries[x] for x in cap_new_regions["Site"]]
@@ -430,10 +418,10 @@ def get_capacities_data(urbs_results):
     cap_total = df_data["process"][["inst-cap"]].reset_index().rename(columns={"support_timeframe": "scenario-year"})
     cap_total["Technology"] = cap_total["Process"]
     for pro in cap_total["Process"].index:
-        if cap_total["Process"][pro] in ["Slack", "Shunt"]:
-            cap_total.drop(index=pro, inplace=True)
+        try:
+            cap_total.loc[pro, "Technology"] = dict_tech[cap_total.loc[pro, "Technology"]]
+        except:
             continue
-        cap_total.loc[pro, "Technology"] = dict_tech[cap_total.loc[pro, "Technology"]]
     year_now = cap_total["scenario-year"].unique()[0]
     cap_total = cap_total.drop(columns=["Process"]).groupby(["Site", "scenario-year", "Technology"]).sum()
     cap_retired = - cap_total.copy()
@@ -444,23 +432,22 @@ def get_capacities_data(urbs_results):
     
     # Save results
     cap_new = cap_new.unstack()["inst-cap"].fillna(0)
-    capacities_new.loc[cap_new.index, cap_new.columns] = cap_new
+    capacities_new.loc[cap_new.index, cap_new.columns.intersection(capacities_new.columns)] = cap_new[capacities_new.columns]
     cap_total = cap_total.unstack()["inst-cap"].fillna(0)
-    capacities_total.loc[cap_total.index, cap_total.columns] = cap_total
+    capacities_total.loc[cap_total.index, cap_total.columns.intersection(capacities_total.columns)] = cap_total[capacities_total.columns]
     
     # Repeat for groups of regions
     cap_new_regions = cap_new_regions.unstack()["inst-cap"].fillna(0)
-    capacities_new.loc[cap_new_regions.index, cap_new_regions.columns] = cap_new_regions
+    capacities_new.loc[cap_new_regions.index, cap_new_regions.columns.intersection(capacities_new.columns)] = cap_new_regions[capacities_new.columns]
     cap_total_regions = cap_total_regions.unstack()["inst-cap"].fillna(0)
-    capacities_total.loc[cap_total_regions.index, cap_total_regions.columns] = cap_total_regions
+    capacities_total.loc[cap_total_regions.index, cap_total_regions.columns.intersection(capacities_total.columns)] = cap_total_regions[capacities_total.columns]
     
     # Retired capacity (continued)
     if year_now == stf_min:
         capacities_retired.loc[cap_total.index, :] = 0
         capacities_retired.loc[cap_total_regions.index, :] = 0
     else:
-        year_past = scenario_years[scenario_years.index(year_now) - 1]
-        index_past = pd.MultiIndex.from_product([[*dict_countries], [year_past]], names=["Site", "scenario-year"])
+        index_past = pd.MultiIndex.from_product([[*dict_countries], [scenario_years[scenario_years.index(year_now)-1]]], names=["Site", "scenario-year"])
         cap_total_past = capacities_total.loc[index_past].stack().reset_index().rename(columns={"level_2": "Technology", 0:"inst-cap-past"})
         cap_total_past["scenario-year"] = year_now
         cap_total_past = cap_total_past.set_index(["Site", "scenario-year", "Technology"])
@@ -474,9 +461,9 @@ def get_capacities_data(urbs_results):
         cap_retired_regions = cap_retired_regions.groupby(["Site", "scenario-year", "Technology"]).sum()
     
         cap_retired = cap_retired.unstack()["inst-cap"].fillna(0)
-        capacities_retired.loc[cap_retired.index, cap_retired.columns] = cap_retired
+        capacities_retired.loc[cap_retired.index, cap_retired.columns.intersection(capacities_retired.columns)] = cap_retired[capacities_retired.columns]
         cap_retired_regions = cap_retired_regions.unstack()["inst-cap"].fillna(0)
-        capacities_retired.loc[cap_retired_regions.index, cap_retired_regions.columns] = cap_retired_regions
+        capacities_retired.loc[cap_retired_regions.index, cap_retired_regions.columns.intersection(capacities_retired.columns)] = cap_retired_regions[capacities_retired.columns]
     
     # Save results
     capacities_total.fillna(0, inplace=True)
@@ -505,7 +492,7 @@ def get_storage_data(urbs_results):
     multiindex = pd.MultiIndex.from_product([report_sites, storage_types, scenario_years], names=["Site", "Storage type", "scenario-year"])
     
     # Prepare dataframe of storage
-    storage = pd.DataFrame(index=multiindex, columns=["inst-cap-p", "new-inst-cap-p", "retired-cap-p", "inst-cap-c", "new-inst-cap-c", "retired-cap-c", "avg-state-of-charge", "full-load cycles", "stored-energy"])
+    storage = pd.DataFrame(0, index=multiindex, columns=["inst-cap-p", "new-inst-cap-p", "retired-cap-p", "inst-cap-c", "new-inst-cap-c", "retired-cap-c", "avg-state-of-charge", "full-load cycles", "stored-energy"])
     
     try:
         # New capacities
@@ -514,7 +501,6 @@ def get_storage_data(urbs_results):
         cap_c_new = df_result["cap_sto_c_new"].droplevel(3).reset_index().rename(columns={"stf": "scenario-year", "sit":"Site", "sto":"Storage type", "cap_sto_c_new":"new-inst-cap-c"}).fillna(0)
         cap_c_new = cap_c_new.set_index(["Site", "Storage type", "scenario-year"])
     except:
-        import pdb; pdb.set_trace()
         return urbs_results
         
     # Old capacity
@@ -545,8 +531,7 @@ def get_storage_data(urbs_results):
         storage_cap["retired-cap-p"] = 0
         storage_cap["retired-cap-c"] = 0
     else:
-        year_past = scenario_years[scenario_years.index(year_now) - 1]
-        index_past = pd.MultiIndex.from_product([[*dict_countries], storage_types, [year_past]], names=["Site", "Storage type", "scenario-year"])
+        index_past = pd.MultiIndex.from_product([[*dict_countries], storage_types, [scenario_years[scenario_years.index(year_now)-1]]], names=["Site", "Storage type", "scenario-year"])
         cap_p_past = storage.loc[index_past, "inst-cap-p"].fillna(0).reset_index().rename(columns={"inst-cap-p": "retired-cap-p"})
         cap_c_past = storage.loc[index_past, "inst-cap-c"].fillna(0).reset_index().rename(columns={"inst-cap-c": "retired-cap-c"})
         cap_p_past["scenario-year"] = year_now
@@ -608,7 +593,6 @@ def get_storage_data(urbs_results):
     storage.loc[storage_in.index, storage_in.columns] = storage_in
     storage.loc[storage_in_regions.index, storage_in_regions.columns] = storage_in_regions
     
-    # Save results
     storage.fillna(0, inplace=True)
     if "Storage" in urbs_results.keys():
         urbs_results["Storage"].set_index(["Site", "Storage type", "scenario-year"], inplace=True)
@@ -680,7 +664,6 @@ def get_curtailment_data(urbs_results):
     curtailment.loc[curtailed.index, curtailed.columns] = curtailed
     curtailment.loc[curtailed_regions.index, curtailed_regions.columns] = curtailed_regions
     
-    # Save results
     curtailment.fillna(0, inplace=True)
     if "Curtailment" in urbs_results.keys():
         urbs_results["Curtailment"].set_index(["Site", "scenario-year"], inplace=True)
@@ -798,7 +781,7 @@ def get_NTC_rents_data(urbs_results):
     # Prepare dataframe of NTC rents
     NTC_rents = pd.DataFrame(index=multiindex, columns=report_sites)
 
-    hourly_prices = urbs_results["Hourly prices"].reset_index().rename(columns={"Hour":"t", "Year":"scenario-year"}).fillna(0)
+    hourly_prices = urbs_results["Hourly prices"].rename(columns={"Hour":"t", "Year":"scenario-year"}).fillna(0)
     hourly_prices = hourly_prices.set_index(["t", "scenario-year"]).stack().reset_index()
     
     prices_site = hourly_prices.rename(columns={"level_2": "Site"}).set_index(["t", "scenario-year", "Site"])
@@ -832,13 +815,12 @@ def get_NTC_rents_data(urbs_results):
             tra_out.loc[idx, "Site"] = tra_out.loc[idx, "Site Out"]
             tra_out.loc[idx, "Site Out"] = aux
             tra_out.loc[idx, "rent"] = - tra_out.loc[idx, "rent"]
-    
+            
     tra_out = tra_out.drop(index=idx_drop)
     if len(tra_out)==0:
         return urbs_results
     tra_out = tra_out.groupby(["Site", "scenario-year", "Site Out"]).sum().unstack()["rent"]
     NTC_rents.loc[tra_out.index, tra_out.columns] = tra_out
-    urbs_results["NTC rents"] = NTC_rents.round(2).reset_index()
     
     # Save results
     NTC_rents.fillna(0, inplace=True)
@@ -887,8 +869,7 @@ def get_cost_data(urbs_results, year_built):
     multiindex = pd.MultiIndex.from_product([report_sites, [int(year)]], names=["Site", "scenario-year"])
     # Prepare dataframe of costs
     costs = pd.DataFrame(0, index=multiindex, columns=["Fix costs", "Variable costs", "Fuel costs", "Environmental costs",
-                                                    "Annualized inv costs", "Annualized inv costs (incl. past)", "Annualized inv costs (incl. past, till horizon)",
-                                                    "Annualized total costs", "Annualized total costs (incl. past)", "Annualized costs (incl. past, till horizon)"])
+                                                       "Annualized inv costs", "Annualized total costs"])
     
     # Get helping factors
     if year_built > stf_min:
@@ -986,59 +967,15 @@ def get_cost_data(urbs_results, year_built):
     if "transmission" in locals():
         transmission = transmission.fillna(0)
     
-    # Find investment that have not completed their depreciation period
-    process['active'] = 0
-    if "storage" in locals():
-        storage['active'] = 0
-    if "transmission" in locals():
-        transmission['active'] = 0
-        
-    if year_built > stf_min:
-        process['Construction year'] = stf_min
-        for ind in process.index:
-            try:
-                process.loc[ind, "Construction year"] = int(ind[2][-4:])
-            except:
-                pass
-        process.loc[process['Construction year']<=stf_min, 'Construction year'] = 1900
-        process['active'] = (process['Construction year'] + process['depreciation'] + 5) >= year_built
-        process["active"] = [int(x) for x in process["active"]]
-        
-        if "storage" in locals():
-            storage['Construction year'] = stf_min
-            for ind in storage.index:
-                try:
-                    storage.loc[ind, 'Construction year'] = int(ind[2][-4:])
-                except:
-                    pass
-            storage.loc[storage['Construction year']<=stf_min, 'Construction year'] = 1900
-            storage['active'] = (storage['Construction year'] + storage['depreciation'] + 5 - year_built) / 5
-            storage.loc[storage["active"] > 1, "active"] = 1
-            
-        # To do: add transmission
-
-    
     # Investment costs
     process["Annualized inv costs"] = process["cap_pro_new"] * process["inv-cost"] * process["invcost-factor"] # alt for intertemporal: 'overpay-factor'
-    process["horizon"] = (2055 - year_built) / (process["depreciation"] + 5)
-    process.loc[process["horizon"]>1, "horizon"] = 1
-    process["Annualized inv costs (incl. past)"] = process["inst-cap"] * process["inv-cost"] * process["active"] * process["invcost-factor"]
-    process["Annualized inv costs (incl. past, till horizon)"] = process["Annualized inv costs (incl. past)"] * process["horizon"]
     
     if "storage" in locals():
         storage["Annualized inv costs"] = (storage["cap_sto_p_new"] * storage["inv-cost-p"] + storage["cap_sto_c_new"] * storage["inv-cost-c"]) * storage["invcost-factor"] # alt for intertemporal: 'overpay-factor'
-        storage["horizon"] = (2055 - year_built) / (storage["depreciation"] + 5)
-        storage.loc[storage["horizon"]>1, "horizon"] = 1
-        storage["Annualized inv costs (incl. past)"] = (storage["inst-cap-p"] * storage["inv-cost-p"] + storage["inst-cap-c"] * storage["inv-cost-c"]) * storage["active"] * storage["invcost-factor"]
-        storage["Annualized inv costs (incl. past, till horizon)"] = storage["Annualized inv costs (incl. past)"] * storage["horizon"]
-        
+            
     if "transmission" in locals():
         transmission["Annualized inv costs"] = transmission["cap_tra_new"] * transmission["inv-cost"] * transmission["invcost-factor"] # alt for intertemporal: 'overpay-factor'
-        transmission["horizon"] = (2055 - year_built) / (transmission["depreciation"] + 5)
-        transmission.loc[transmission["horizon"]>1, "horizon"] = 1
-        transmission["Annualized inv costs (incl. past)"] = transmission["inst-cap"] * transmission["inv-cost"] * transmission["active"] * transmission["invcost-factor"]
-        transmission["Annualized inv costs (incl. past, till horizon)"] = transmission["Annualized inv costs (incl. past)"] * transmission["horizon"]
-    
+        
     # Fix costs
     process["Fix costs"] = process["inst-cap"] * process["fix-cost"] * cost_factor
     
@@ -1065,22 +1002,23 @@ def get_cost_data(urbs_results, year_built):
     # Reindex and plit transmission costs between regions equally
     process = process.droplevel([2]).reset_index().groupby(["Site", "scenario-year"]).sum()
     if "storage" in locals():
-        storage = storage.droplevel([2,3]).reset_index().groupby(["Site", "scenario-year"]).sum()
+        if len(storage):
+            storage = storage.droplevel([2,3]).reset_index().groupby(["Site", "scenario-year"]).sum()
+        else:
+            storage = storage.droplevel([2,3])
     if "transmission" in locals():
-        transmission_1 = transmission.droplevel([2,3,4]).reset_index().rename(columns={"Site In": "Site"}).groupby(["Site", "scenario-year"]).agg({"Annualized inv costs": "sum", "Annualized inv costs (incl. past)": "sum", "Annualized inv costs (incl. past, till horizon)": "sum", "Fix costs": "sum", "Variable costs": "sum"})/2
-        transmission_2 = transmission.droplevel([0,2,3]).reset_index().rename(columns={"Site Out": "Site"}).groupby(["Site", "scenario-year"]).agg({"Annualized inv costs": "sum", "Annualized inv costs (incl. past)": "sum", "Annualized inv costs (incl. past, till horizon)": "sum", "Fix costs": "sum", "Variable costs": "sum"})/2
+        transmission_1 = transmission.droplevel([2,3,4]).reset_index().rename(columns={"Site In": "Site"}).groupby(["Site", "scenario-year"]).agg({"Annualized inv costs": "sum", "Fix costs": "sum", "Variable costs": "sum"})/2
+        transmission_2 = transmission.droplevel([0,2,3]).reset_index().rename(columns={"Site Out": "Site"}).groupby(["Site", "scenario-year"]).agg({"Annualized inv costs": "sum", "Fix costs": "sum", "Variable costs": "sum"})/2
     
     # Report costs
-    costs.loc[process.index, ["Fix costs", "Variable costs", "Fuel costs", "Environmental costs", "Annualized inv costs", "Annualized inv costs (incl. past)", "Annualized inv costs (incl. past, till horizon)"]] = costs.loc[process.index, ["Fix costs", "Variable costs", "Fuel costs", "Environmental costs", "Annualized inv costs", "Annualized inv costs (incl. past)", "Annualized inv costs (incl. past, till horizon)"]] + process.loc[process.index, ["Fix costs", "Variable costs", "Fuel costs", "Environmental costs", "Annualized inv costs", "Annualized inv costs (incl. past)", "Annualized inv costs (incl. past, till horizon)"]]
+    costs.loc[process.index, ["Fix costs", "Variable costs", "Fuel costs", "Environmental costs", "Annualized inv costs"]] = costs.loc[process.index, ["Fix costs", "Variable costs", "Fuel costs", "Environmental costs", "Annualized inv costs"]] + process.loc[process.index, ["Fix costs", "Variable costs", "Fuel costs", "Environmental costs", "Annualized inv costs"]]
     if "storage" in locals():
-        costs.loc[storage.index, ["Fix costs", "Variable costs", "Annualized inv costs", "Annualized inv costs (incl. past)", "Annualized inv costs (incl. past, till horizon)"]] = costs.loc[storage.index, ["Fix costs", "Variable costs", "Annualized inv costs", "Annualized inv costs (incl. past)", "Annualized inv costs (incl. past, till horizon)"]] + storage[["Fix costs", "Variable costs", "Annualized inv costs", "Annualized inv costs (incl. past)", "Annualized inv costs (incl. past, till horizon)"]]
+        costs.loc[storage.index, ["Fix costs", "Variable costs", "Annualized inv costs"]] = costs.loc[storage.index, ["Fix costs", "Variable costs", "Annualized inv costs"]] + storage[["Fix costs", "Variable costs", "Annualized inv costs"]]
     if "transmission" in locals():
-        costs.loc[transmission_1.index, ["Fix costs", "Variable costs", "Annualized inv costs", "Annualized inv costs (incl. past)", "Annualized inv costs (incl. past, till horizon)"]] = costs.loc[transmission_1.index, ["Fix costs", "Variable costs", "Annualized inv costs", "Annualized inv costs (incl. past)", "Annualized inv costs (incl. past, till horizon)"]] + transmission_1[["Fix costs", "Variable costs", "Annualized inv costs", "Annualized inv costs (incl. past)", "Annualized inv costs (incl. past, till horizon)"]]
-        costs.loc[transmission_2.index, ["Fix costs", "Variable costs", "Annualized inv costs", "Annualized inv costs (incl. past)", "Annualized inv costs (incl. past, till horizon)"]] = costs.loc[transmission_2.index, ["Fix costs", "Variable costs", "Annualized inv costs", "Annualized inv costs (incl. past)", "Annualized inv costs (incl. past, till horizon)"]] + transmission_2[["Fix costs", "Variable costs", "Annualized inv costs", "Annualized inv costs (incl. past)", "Annualized inv costs (incl. past, till horizon)"]] 
+        costs.loc[transmission_1.index, ["Fix costs", "Variable costs", "Annualized inv costs"]] = costs.loc[transmission_1.index, ["Fix costs", "Variable costs", "Annualized inv costs"]] + transmission_1[["Fix costs", "Variable costs", "Annualized inv costs"]]
+        costs.loc[transmission_2.index, ["Fix costs", "Variable costs", "Annualized inv costs"]] = costs.loc[transmission_2.index, ["Fix costs", "Variable costs", "Annualized inv costs"]] + transmission_2[["Fix costs", "Variable costs", "Annualized inv costs"]] 
     
     costs['Annualized total costs'] = costs["Fix costs"] + costs["Variable costs"] + costs["Fuel costs"] + costs["Environmental costs"] + costs["Annualized inv costs"]
-    costs['Annualized total costs (incl. past)'] = costs["Fix costs"] + costs["Variable costs"] + costs["Fuel costs"] + costs["Environmental costs"] + costs["Annualized inv costs (incl. past)"]
-    costs['Annualized total costs (incl. past, till horizon)'] = costs["Fix costs"] + costs["Variable costs"] + costs["Fuel costs"] + costs["Environmental costs"] + costs["Annualized inv costs (incl. past, till horizon)"]
     
     # Regions
     costs_regions = costs.loc[list(set(dict_countries.keys()))].reset_index()
@@ -1139,12 +1077,12 @@ def get_abatement(urbs_results):
                                                     "CO2 emissions (Mt)"])
 
     # Emissions
-    emissions = urbs_results["Emissions by fuel"].reset_index().set_index(["Site"])
+    emissions = urbs_results["Emissions by fuel"].set_index(["Site"])
     emissions = emissions.loc[dict_countries.keys()].reset_index()
     emissions = emissions.drop(columns=["Site"]).set_index(["scenario-year"]).sum(axis=1).reset_index().groupby("scenario-year").sum()
     
     # System costs
-    costs = urbs_results["System costs"].reset_index().set_index(["Site"])
+    costs = urbs_results["System costs"].set_index(["Site"])
     costs = costs.loc[dict_countries.keys()].reset_index().drop(columns=["Site"]).groupby(["scenario-year"]).sum()
     
     # Fill Abatement sheet
@@ -1199,12 +1137,15 @@ for result_file in list_files:
     report_sites = sorted(list(set(dict_countries.keys()))) + sorted(list(set(dict_countries.values())))
     
     if os.path.exists(writer_path):
+        # print("the file exists and will be updated")
         urbs_results = pd.read_excel(writer_path, sheet_name=None)
     else:
-        writer_path_initial = os.path.abspath(os.path.join(result_folder, os.pardir, "URBS_" + version + "_" + year + ".xlsx"))
+        writer_path_initial = os.path.abspath(os.path.join(result_folder, os.pardir, "URBS_" + version + "_2019.xlsx"))
         if os.path.exists(writer_path_initial):
+            # print("the file for 2019 will be loaded, then saved somewhere else with data for 2030")
             urbs_results = pd.read_excel(writer_path_initial, sheet_name=None)
         else:
+            # print("file for 2019 does not exist, will be created")
             urbs_results = {}
     
     ### SHEETS ###

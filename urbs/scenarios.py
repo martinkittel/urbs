@@ -25,7 +25,7 @@ def scenario_2030_base(data):
             
     # change minimum share of imports
     prop = data['global_prop']
-    prop.loc[(2030, 'Property'), 'value'] = 0.2
+    prop.loc[(2030, 'Share of imports'), 'value'] = 0.2
     
     # change maximum installable capacity of PV in Australia
     pro = data['process']
@@ -50,71 +50,78 @@ def scenario_2030_base(data):
     slack_commodities_only = (co.index.get_level_values('Type') == 'Slack')
     co.loc[slack_commodities_only, 'max'] *= 1.02**(2030-2019)
     return data
+     
+def scenario_2030_lifetime_20years(data):
+    data = scenario_2030_base(data)
+    # change lifetime of PV
+    pro = data['process']
+    pro.loc[(2030, 'Tennant Creek', 'Solar_PV'), 'depreciation'] = 20
+    return data
     
-def scenario_2030_no_imports(data):
+def scenario_2030_imports_00pc(data):
     data = scenario_2030_base(data)
     # change minimum share of imports
     prop = data['global_prop']
-    prop.loc[(2030, 'Property'), 'value'] = 0
+    prop.loc[(2030, 'Share of imports'), 'value'] = 0
     return data
     
-def scenario_2030_10pc_imports(data):
+def scenario_2030_imports_10pc(data):
     data = scenario_2030_base(data)
     # change minimum share of imports
     prop = data['global_prop']
-    prop.loc[(2030, 'Property'), 'value'] = 0.1
+    prop.loc[(2030, 'Share of imports'), 'value'] = 0.1
     return data
     
-def scenario_2030_30pc_imports(data):
+def scenario_2030_imports_30pc(data):
     data = scenario_2030_base(data)
     # change minimum share of imports
     prop = data['global_prop']
-    prop.loc[(2030, 'Property'), 'value'] = 0.3
+    prop.loc[(2030, 'Share of imports'), 'value'] = 0.3
     return data
     
-def scenario_2030_40pc_imports(data):
+def scenario_2030_imports_40pc(data):
     data = scenario_2030_base(data)
     # change minimum share of imports
     prop = data['global_prop']
-    prop.loc[(2030, 'Property'), 'value'] = 0.4
+    prop.loc[(2030, 'Share of imports'), 'value'] = 0.4
     return data
     
-def scenario_2030_50pc_solar_efficiency(data):
+def scenario_2030_solar_eff_050pc(data):
     data = scenario_2030_base(data)
     # change efficiency of solar system in Australia
     pro = data['process']
     pro.loc[(2030, 'Tennant Creek', 'Solar_PV'), 'reliability'] = 0.5
     return data
 
-def scenario_2030_65pc_solar_efficiency(data):
+def scenario_2030_solar_eff_065pc(data):
     data = scenario_2030_base(data)
     # change efficiency of solar system in Australia
     pro = data['process']
     pro.loc[(2030, 'Tennant Creek', 'Solar_PV'), 'reliability'] = 0.65
     return data
     
-def scenario_2030_70pc_solar_efficiency(data):
+def scenario_2030_solar_eff_070pc(data):
     data = scenario_2030_base(data)
     # change efficiency of solar system in Australia
     pro = data['process']
     pro.loc[(2030, 'Tennant Creek', 'Solar_PV'), 'reliability'] = 0.7
     return data
     
-def scenario_2030_80pc_solar_efficiency(data):
+def scenario_2030_solar_eff_080pc(data):
     data = scenario_2030_base(data)
     # change efficiency of solar system in Australia
     pro = data['process']
     pro.loc[(2030, 'Tennant Creek', 'Solar_PV'), 'reliability'] = 0.8
     return data
     
-def scenario_2030_85pc_solar_efficiency(data):
+def scenario_2030_solar_eff_085pc(data):
     data = scenario_2030_base(data)
     # change efficiency of solar system in Australia
     pro = data['process']
     pro.loc[(2030, 'Tennant Creek', 'Solar_PV'), 'reliability'] = 0.85
     return data
     
-def scenario_2030_100pc_solar_efficiency(data):
+def scenario_2030_solar_eff_100pc(data):
     data = scenario_2030_base(data)
     # change efficiency of solar system in Australia
     pro = data['process']
@@ -122,7 +129,7 @@ def scenario_2030_100pc_solar_efficiency(data):
     return data
 
 
-def scenario_2030_0km_cable(data):
+def scenario_2030_cable_0000km(data):
     data = scenario_2030_base(data)
     # change length of cable
     cab = 0
@@ -133,7 +140,7 @@ def scenario_2030_0km_cable(data):
     return data
     
     
-def scenario_2030_1000km_cable(data):
+def scenario_2030_cable_1000km(data):
     data = scenario_2030_base(data)
     # change length of cable
     cab = 1000
@@ -143,7 +150,7 @@ def scenario_2030_1000km_cable(data):
     tra.loc[(2030, 'Darwin', 'Singapore', 'DC_CAB', 'Elec'), 'fix-cost'] = 21 * cab * 1.1
     return data
     
-def scenario_2030_2000km_cable(data):
+def scenario_2030_cable_2000km(data):
     data = scenario_2030_base(data)
     # change length of cable
     cab = 2000
@@ -153,7 +160,7 @@ def scenario_2030_2000km_cable(data):
     tra.loc[(2030, 'Darwin', 'Singapore', 'DC_CAB', 'Elec'), 'fix-cost'] = 21 * cab * 1.1
     return data
 
-def scenario_2030_3000km_cable(data):
+def scenario_2030_cable_3000km(data):
     data = scenario_2030_base(data)
     # change length of cable
     cab = 3000
@@ -163,7 +170,7 @@ def scenario_2030_3000km_cable(data):
     tra.loc[(2030, 'Darwin', 'Singapore', 'DC_CAB', 'Elec'), 'fix-cost'] = 21 * cab * 1.1
     return data
 
-def scenario_2030_4000km_cable(data):
+def scenario_2030_cable_4000km(data):
     data = scenario_2030_base(data)
     # change length of cable
     cab = 4000
@@ -173,7 +180,7 @@ def scenario_2030_4000km_cable(data):
     tra.loc[(2030, 'Darwin', 'Singapore', 'DC_CAB', 'Elec'), 'fix-cost'] = 21 * cab * 1.1
     return data
     
-def scenario_2030_5000km_cable(data):
+def scenario_2030_cable_5000km(data):
     data = scenario_2030_base(data)
     # change length of cable
     cab = 5000

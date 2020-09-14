@@ -281,7 +281,8 @@ def def_transmission_capacity_rule(m, stf, sin, sout, tra, com):
 def def_transmission_output_rule(m, tm, stf, sin, sout, tra, com):
     return (m.e_tra_out[tm, stf, sin, sout, tra, com] ==
             m.e_tra_in[tm, stf, sin, sout, tra, com] *
-            m.transmission_dict['eff'][(stf, sin, sout, tra, com)])
+            m.transmission_dict['eff'][(stf, sin, sout, tra, com)] *
+            m._data["transmission"]["reliability"][(stf, sin, sout, tra, com)])
 
 # power flow rule for DCPF transmissions
 def def_dc_power_flow_rule(m, tm, stf, sin, sout, tra, com):
