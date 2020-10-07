@@ -11,8 +11,8 @@ global dict_countries
 global dict_season
 
 # User preferences
-result_folder = os.path.join("result", "SunCable", "v4.0-20200911T1359")
-version = "v4.00"
+result_folder = os.path.join("result", "SunCable", "v3.0-20200909T2356")
+version = "v3.00"
 scenario_years = [2019, 2030]
 stf_min = 2019
 
@@ -1109,6 +1109,39 @@ def get_abatement(urbs_results):
     
     return urbs_results
 
+def get_interface_LCA(urbs2lca_results, urbs_results, scen):
+    """ description"""
+    urbs2lca_results[scen] = 0
+
+    #urbs2lca_results.loc[("Energy produced in Tennant Creek", "GWh/a"), scen] = (urbs_results["Electricity generation"].loc[("Tennant Creek", 2030), "PV"] + urbs_results["Curtailment"].loc[("Tennant Creek", 2030), "PV"]) / 1000
+    urbs2lca_results.loc[("Energy produced in Tennant Creek", "GWh/a"), scen] = (urbs_results["Electricity generation"].loc[("Tennant Creek", 2030), "PV"]) / 1000
+    urbs2lca_results.loc[("Energy consumed in Australia", "GWh/a"), scen] = (urbs_results["Electricity"].loc[("total_AUS", 2030), "elec-demand"] - urbs_results["Electricity generation"].loc[("total_AUS", 2030), "Slack_clean"])/ 1000
+    urbs2lca_results.loc[("Energy sent to Singapore (start of cable)", "GWh/a"), scen] = urbs_results["Transfers"].loc[("Darwin", 2030), "Singapore"] / df_data["transmission"].loc[(2030, "Darwin", "Singapore", "DC_CAB", "Elec"), "eff"] / 1000
+    urbs2lca_results.loc[("Energy consumed in Singapore", "GWh/a"), scen] = urbs_results["Transfers"].loc[("Darwin", 2030), "Singapore"] / 1000
+    urbs2lca_results.loc[("Energy demand in Singapore", "GWh/a"), scen] = urbs_results["Electricity"].loc[("total_SGP", 2030), "elec-demand"] / 1000
+    urbs2lca_results.loc[("Installed PV capacity (total)", "GW"), scen] = urbs_results["Installed capacities"].loc[("Tennant Creek", 2030), "PV"] / 1000
+    urbs2lca_results.loc[("Installed battery storage capacity (total)", "GWh"), scen] = urbs_results["Storage"].loc[("total_AUS", "Battery", 2030), "inst-cap-c"] / 1000
+    urbs2lca_results.loc[("Installed cable capacity (total)", "GW"), scen] = urbs_results["NTC"].loc[("total_AUS", 2030), "total_SGP"] / 1000
+    urbs2lca_results.loc[("Lifetime PV", "a"), scen] = df_data["process"].loc[(2030, "Tennant Creek", "Solar_PV"), "depreciation"]
+    urbs2lca_results.loc[("Lifetime battery", "a"), scen] = df_data["storage"].loc[(2030, "Tennant Creek", "Battery", "Elec"), "depreciation"]
+    urbs2lca_results.loc[("Lifetime cable", "a"), scen] = df_data["transmission"].loc[(2030, "Darwin", "Singapore", "DC_CAB", "Elec"), "depreciation"]
+    
+    # Cable length is 3800, unless scenario changes that
+    urbs2lca_results.loc[("Cable length"), scen] = 3800
+    if scen[-2:] == "km":
+        urbs2lca_results.loc[("Cable length"), scen] = int(scen[-6:-2])
+    
+    # Allocation factor
+    urbs2lca_results.loc[("Allocation factor for Singapore", "dimensionless"), scen] = urbs2lca_results.loc[("Energy sent to Singapore (start of cable)", "GWh/a"), scen] / (urbs2lca_results.loc[("Energy sent to Singapore (start of cable)", "GWh/a"), scen] + urbs2lca_results.loc[("Energy consumed in Australia", "GWh/a"), scen])
+    
+    urbs2lca_results.loc[("PV capacity allocated to SG", "GW"), scen] = urbs2lca_results.loc[("Allocation factor for Singapore", "dimensionless"), scen] * urbs2lca_results.loc[("Installed PV capacity (total)", "GW"), scen]
+    urbs2lca_results.loc[("Battery storage capacity allocated to SG", "GWh"), scen] = urbs2lca_results.loc[("Allocation factor for Singapore", "dimensionless"), scen] * urbs2lca_results.loc[("Installed battery storage capacity (total)", "GWh"), scen]
+    urbs2lca_results.loc[("Cable capacity allocated to SG", "GW"), scen] = urbs2lca_results.loc[("Allocation factor for Singapore", "dimensionless"), scen] * urbs2lca_results.loc[("Installed cable capacity (total)", "GW"), scen]
+    
+    # Save results
+    urbs2lca_results.reset_index(inplace=True)
+    return urbs2lca_results
+    
     
 # Read in data for all scenarios
 list_files = [f.name for f in os.scandir(result_folder) if f.name[-3:]==".h5"]
@@ -1186,6 +1219,22 @@ for result_file in list_files:
         else:
             urbs_results.pop(sheet)
     writer.save()
+    
+    ### LCA ###
+    if year == "2030":
+        lca_path = os.path.abspath(os.path.join(result_folder, os.pardir, "URBS2LCA_" + version + ".csv"))
+        lca_path_Sri = os.path.abspath(os.path.join(result_folder, os.pardir, "URBS2LCA_" + version + "_Sri.csv"))
+        lca_empty_path = os.path.abspath(os.path.join(result_folder, os.pardir, "Interface_empty.csv"))
+        if os.path.exists(lca_path):
+            # print("the file exists and will be updated")
+            urbs2lca_results = pd.read_csv(lca_path, sep=";", decimal=",")
+        else:
+            urbs2lca_results = pd.read_csv(lca_empty_path, sep=";", decimal=",")
+        urbs2lca_results.set_index(["index", "unit"], inplace=True)
+        urbs2lca_results = get_interface_LCA(urbs2lca_results, urbs_results, scen)
+        
+        urbs2lca_results.to_csv(lca_path, index=False, decimal=",", sep=";")
+        urbs2lca_results.to_csv(lca_path_Sri, index=False, decimal=".", sep=",")
     
     
 # for result_file in list_files:
