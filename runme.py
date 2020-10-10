@@ -3,7 +3,7 @@ import shutil
 import urbs
 
 
-input_files = 'Sin-Aus-urbs_v6.0.xlsx'  # for single year file name, for intertemporal folder name
+input_files = 'Sin-Aus-urbs_v6.4.xlsx'  # for single year file name, for intertemporal folder name
 input_dir = os.path.join('Input', 'SunCable')
 input_path = os.path.join(input_dir, input_files)
 
@@ -54,26 +54,62 @@ for country, color in my_colors.items():
 # select scenarios to be run
 scenarios = [
              urbs.scenario_2019,
-             urbs.scenario_2030_base,
-             # # imports
-             urbs.scenario_2030_imports_00pc,
-             urbs.scenario_2030_imports_10pc,
-             urbs.scenario_2030_imports_30pc,
-             urbs.scenario_2030_imports_40pc,
-             # # solar efficiency
-             urbs.scenario_2030_solar_eff_050pc,
-             urbs.scenario_2030_solar_eff_065pc,
-             urbs.scenario_2030_solar_eff_070pc,
-             urbs.scenario_2030_solar_eff_080pc,
-             urbs.scenario_2030_solar_eff_085pc,
-             urbs.scenario_2030_solar_eff_100pc,
-             # # cable length
-             urbs.scenario_2030_cable_0000km,
-             urbs.scenario_2030_cable_1000km,
-             urbs.scenario_2030_cable_2000km,
-             urbs.scenario_2030_cable_3000km,
-             urbs.scenario_2030_cable_4000km,
-             urbs.scenario_2030_cable_5000km,
+             # cab 3800 km
+             urbs.scenario_2030_eff050_cab3800,
+             urbs.scenario_2030_eff065_cab3800,
+             urbs.scenario_2030_eff070_cab3800,
+             urbs.scenario_2030_eff075_cab3800, # base case
+             urbs.scenario_2030_eff080_cab3800,
+             urbs.scenario_2030_eff085_cab3800,
+             urbs.scenario_2030_eff100_cab3800,
+             # cab 0000 km
+             urbs.scenario_2030_eff050_cab0000,
+             urbs.scenario_2030_eff065_cab0000,
+             urbs.scenario_2030_eff070_cab0000,
+             urbs.scenario_2030_eff075_cab0000,
+             urbs.scenario_2030_eff080_cab0000,
+             urbs.scenario_2030_eff085_cab0000,
+             urbs.scenario_2030_eff100_cab0000,
+             # cab 1000 km
+             urbs.scenario_2030_eff050_cab1000,
+             urbs.scenario_2030_eff065_cab1000,
+             urbs.scenario_2030_eff070_cab1000,
+             urbs.scenario_2030_eff075_cab1000,
+             urbs.scenario_2030_eff080_cab1000,
+             urbs.scenario_2030_eff085_cab1000,
+             urbs.scenario_2030_eff100_cab1000,
+             # cab 2000 km
+             urbs.scenario_2030_eff050_cab2000,
+             urbs.scenario_2030_eff065_cab2000,
+             urbs.scenario_2030_eff070_cab2000,
+             urbs.scenario_2030_eff075_cab2000,
+             urbs.scenario_2030_eff080_cab2000,
+             urbs.scenario_2030_eff085_cab2000,
+             urbs.scenario_2030_eff100_cab2000,
+             # cab 3000 km
+             urbs.scenario_2030_eff050_cab3000,
+             urbs.scenario_2030_eff065_cab3000,
+             urbs.scenario_2030_eff070_cab3000,
+             urbs.scenario_2030_eff075_cab3000,
+             urbs.scenario_2030_eff080_cab3000,
+             urbs.scenario_2030_eff085_cab3000,
+             urbs.scenario_2030_eff100_cab3000,
+             # cab 0000 km
+             urbs.scenario_2030_eff050_cab4000,
+             urbs.scenario_2030_eff065_cab4000,
+             urbs.scenario_2030_eff070_cab4000,
+             urbs.scenario_2030_eff075_cab4000,
+             urbs.scenario_2030_eff080_cab4000,
+             urbs.scenario_2030_eff085_cab4000,
+             urbs.scenario_2030_eff100_cab4000,
+             # cab 0000 km
+             urbs.scenario_2030_eff050_cab5000,
+             urbs.scenario_2030_eff065_cab5000,
+             urbs.scenario_2030_eff070_cab5000,
+             urbs.scenario_2030_eff075_cab5000,
+             urbs.scenario_2030_eff080_cab5000,
+             urbs.scenario_2030_eff085_cab5000,
+             urbs.scenario_2030_eff100_cab5000,
             ]
 
 for scenario in scenarios:

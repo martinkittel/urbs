@@ -707,7 +707,7 @@ def def_peak_demand(m, stf, sit, com):
     
 # sum of cap-credit >= peak demand
 def res_capacity_credit_rule(m, stf, sit, com):
-    if stf == 2015:
+    if stf == 2019:
         return pyomo.Constraint.Skip
     else:
         cap_credit = 0

@@ -105,6 +105,12 @@ def add_transmission(m):
         m.sit_tuples, m.com_demand,
         rule=def_cap_credit_transmission,
         doc='sum of cap-credit from transmission lines')
+        
+    # ramping
+    m.res_transmission_maxgrad = pyomo.Constraint(
+        m.tm, m.tra_tuples,
+        rule=res_transmission_maxgrad_rule,
+        doc='transmitted power at destination may not increase/decrease faster than maximal gradient')
     return m
 
 # adds the transmission features to model with DCPF model features
@@ -283,6 +289,19 @@ def def_transmission_output_rule(m, tm, stf, sin, sout, tra, com):
             m.e_tra_in[tm, stf, sin, sout, tra, com] *
             m.transmission_dict['eff'][(stf, sin, sout, tra, com)] *
             m._data["transmission"]["reliability"][(stf, sin, sout, tra, com)])
+            
+def res_transmission_maxgrad_rule(m, tm, stf, sin, sout, tra, com):
+    if tm == 1:
+        return (m.e_tra_out[tm, stf, sin, sout, tra, com] <=
+                m._data["transmission"]["ramp-arrival"][(stf, sin, sout, tra, com)] *
+                max(m._data["demand"][(sout, com)].loc[(stf, slice(None))]))
+    else:
+        return (- m._data["transmission"]["ramp-arrival"][(stf, sin, sout, tra, com)] *
+                max(m._data["demand"][(sout, com)].loc[(stf, slice(None))]),
+                m.e_tra_out[tm, stf, sin, sout, tra, com] - m.e_tra_out[tm - 1, stf, sin, sout, tra, com],
+                m._data["transmission"]["ramp-arrival"][(stf, sin, sout, tra, com)] *
+                max(m._data["demand"][(sout, com)].loc[(stf, slice(None))]))
+    
 
 # power flow rule for DCPF transmissions
 def def_dc_power_flow_rule(m, tm, stf, sin, sout, tra, com):

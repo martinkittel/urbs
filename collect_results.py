@@ -11,7 +11,7 @@ global dict_countries
 global dict_season
 
 # User preferences
-result_folder = os.path.join("result", "SunCable", "v6.0-20201007T1311")
+result_folder = os.path.join("result", "SunCable", "v6.1-20201010T1153")
 version = "v6.00"
 scenario_years = [2019, 2030]
 stf_min = 2019
