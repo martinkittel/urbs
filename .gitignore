@@ -1,7 +1,6 @@
 *~
 *.pyc
 .idea/*
-result/*
-results/*
+result/Mekong/*
 doc/_build/*
-Input/*
+Input/Mekong/*

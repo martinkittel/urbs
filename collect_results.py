@@ -11,8 +11,8 @@ global dict_countries
 global dict_season
 
 # User preferences
-result_folder = os.path.join("result", "SunCable", "v6.1-20201010T1153")
-version = "v6.00"
+result_folder = os.path.join("result", "SunCable", "v6.2-20201010T1221")
+version = "v6.20"
 scenario_years = [2019, 2030]
 stf_min = 2019
 
@@ -78,11 +78,6 @@ def extend_to_year(df):
     df_empty = df_empty.reset_index().set_index("t_new")
     
     t = df_empty.index
-    # df_empty.loc[(t <= 1416) | (t>=8017), "t"] = (df_empty.index[(t <= 1416) | (t>=8017)]-1)%96+1 # winter
-    # df_empty.loc[0, "t"] = 0
-    # df_empty.loc[(t <= 3624) & (t>=1417), "t"] = (df_empty.index[(t <= 3624) & (t>=1417)]-1)%96+97 # Spring
-    # df_empty.loc[(t <= 5832) & (t>=3625), "t"] = (df_empty.index[(t <= 5832) & (t>=3625)]-1)%96+193 # Summer
-    # df_empty.loc[(t <= 8016) & (t>=5833), "t"] = (df_empty.index[(t <= 8016) & (t>=5833)]-1)%96+289 # Autumn
     df_empty.loc[(t <= 1416) | (t>=8017), "t"] = (df_empty.index[(t <= 1416) | (t>=8017)]) # winter
     df_empty.loc[0, "t"] = 0
     df_empty.loc[(t <= 3624) & (t>=1417), "t"] = (df_empty.index[(t <= 3624) & (t>=1417)]) # Spring
@@ -109,11 +104,6 @@ def add_weight(df):
     df_empty = df_empty.reset_index().set_index("t_new")
     
     t = df_empty.index
-    # df_empty.loc[(t <= 1416) | (t>=8017), "t"] = (df_empty.index[(t <= 1416) | (t>=8017)]-1)%168+1 # winter
-    # df_empty.loc[0, "t"] = 0
-    # df_empty.loc[(t <= 3624) & (t>=1417), "t"] = (df_empty.index[(t <= 3624) & (t>=1417)]-1)%168+169 # Spring
-    # df_empty.loc[(t <= 5832) & (t>=3625), "t"] = (df_empty.index[(t <= 5832) & (t>=3625)]-1)%168+337 # Summer
-    # df_empty.loc[(t <= 8016) & (t>=5833), "t"] = (df_empty.index[(t <= 8016) & (t>=5833)]-1)%168+505 # Autumn
     df_empty.loc[(t <= 1416) | (t>=8017), "t"] = (df_empty.index[(t <= 1416) | (t>=8017)]) # winter
     df_empty.loc[0, "t"] = 0
     df_empty.loc[(t <= 3624) & (t>=1417), "t"] = (df_empty.index[(t <= 3624) & (t>=1417)]) # Spring
@@ -772,70 +762,6 @@ def get_NTC_data(urbs_results):
     urbs_results["NTC"] = urbs_results["NTC"].sort_index(level="scenario-year")
     
     return urbs_results
-    
-    
-def get_NTC_rents_data(urbs_results):
-    """
-    """
-    multiindex = pd.MultiIndex.from_product([report_sites, [int(year)]], names=["Site", "scenario-year"])
-    # Prepare dataframe of NTC rents
-    NTC_rents = pd.DataFrame(index=multiindex, columns=report_sites)
-
-    hourly_prices = urbs_results["Hourly prices"].rename(columns={"Hour":"t", "Year":"scenario-year"}).fillna(0)
-    hourly_prices = hourly_prices.set_index(["t", "scenario-year"]).stack().reset_index()
-    
-    prices_site = hourly_prices.rename(columns={"level_2": "Site"}).set_index(["t", "scenario-year", "Site"])
-    prices_siteout = hourly_prices.rename(columns={"level_2": "Site Out"}).set_index(["t", "scenario-year", "Site Out"])
-    
-    try:
-        tra_out = df_result["e_tra_out"].droplevel([4,5]).reset_index().rename(columns={"stf": "scenario-year", "sit": "Site", "sit_": "Site Out"}).set_index(["Site", "Site Out", "scenario-year", "t"])
-    except KeyError:
-        return urbs_results
-    tra_out = tra_out.reset_index()
-    # tra_out = add_weight(tra_out)
-    # tra_out_regions = tra_out.reset_index()
-    tra_out_regions = tra_out.copy()
-    tra_out_regions["Site"] = [dict_countries[x] for x in tra_out_regions["Site"]]
-    tra_out_regions["Site Out"] = [dict_countries[x] for x in tra_out_regions["Site Out"]]
-    tra_out_regions = tra_out_regions.groupby(["t", "Site", "scenario-year", "Site Out"]).sum().reset_index()
-    tra_out = tra_out.append(tra_out_regions, sort=True, ignore_index=True)
-    
-    tra_out = tra_out.set_index(["t", "scenario-year", "Site"]).join(prices_site).rename(columns={0: "price Site"}).reset_index()
-    tra_out = tra_out.set_index(["t", "scenario-year", "Site Out"]).join(prices_siteout).rename(columns={0: "price Site Out"}).reset_index()
-    tra_out["rent"] = (tra_out["price Site Out"] - tra_out["price Site"]) * tra_out["e_tra_out"]
-    
-    tra_out = tra_out.drop(columns=["e_tra_out", "t", "price Site", "price Site Out"]).groupby(["Site", "scenario-year", "Site Out"]).sum().reset_index()
-    
-    idx_drop = []
-    for idx in tra_out.index:
-        if tra_out.loc[idx, "rent"] == 0:
-            idx_drop = idx_drop + [idx]
-        if tra_out.loc[idx, "rent"] < 0:
-            aux = tra_out.loc[idx, "Site"]
-            tra_out.loc[idx, "Site"] = tra_out.loc[idx, "Site Out"]
-            tra_out.loc[idx, "Site Out"] = aux
-            tra_out.loc[idx, "rent"] = - tra_out.loc[idx, "rent"]
-            
-    tra_out = tra_out.drop(index=idx_drop)
-    if len(tra_out)==0:
-        return urbs_results
-    tra_out = tra_out.groupby(["Site", "scenario-year", "Site Out"]).sum().unstack()["rent"]
-    NTC_rents.loc[tra_out.index, tra_out.columns] = tra_out
-    
-    # Save results
-    NTC_rents.fillna(0, inplace=True)
-    if "NTC rents" in urbs_results.keys():
-        urbs_results["NTC rents"].set_index(["Site", "scenario-year"], inplace=True)
-        try: # Update values in sheet
-            urbs_results["NTC rents"].loc[NTC_rents.index] = NTC_rents.round(2)
-        except: # Append values in sheet
-            urbs_results["NTC rents"] = urbs_results["NTC rents"].append(NTC_rents.round(2))
-    else: # Create sheet
-        urbs_results["NTC rents"] = NTC_rents.round(2)
-    # Sort index
-    urbs_results["NTC rents"] = urbs_results["NTC rents"].sort_index(level="scenario-year")
-    
-    return urbs_results
 
 
 def invcost_factor(dep_prd, interest, discount=None, year_built=None,
@@ -1040,80 +966,12 @@ def get_cost_data(urbs_results, year_built):
     urbs_results["System costs"] = urbs_results["System costs"].sort_index(level="scenario-year")
     
     return urbs_results
-
-
-def get_marginal_generation_data(urbs_results):
-    # import pdb; pdb.set_trace()
-    # marginal = reader["Marg. elec. generation process"].set_index(["Site", "scenario-year"])
-    return urbs_results
-    
-
-def get_FLH_data(reader, writer):
-    # Generation
-    capacities_total = reader["Installed capacities"].set_index(["Site", "scenario-year"]).dropna(axis=0, how="all")
-    generation = reader["Electricity generation"].set_index(["Site", "scenario-year"]).loc[capacities_total.index]
-    FLH_generation = reader["Full-load hours generation"].set_index(["Site", "scenario-year"])
-    
-    FLH_generation.loc[capacities_total.index] = generation / capacities_total
-    FLH_generation.round(2).reset_index().to_excel(writer, sheet_name='Full-load hours generation', index=False)
-    
-    # Transmission
-    NTC = reader["NTC"].set_index(["Site", "scenario-year"]).dropna(axis=0, how="all")
-    transfers = reader["Transfers"].set_index(["Site", "scenario-year"]).loc[NTC.index]
-    FLH_transmission = reader["Full-load hours transmission"].set_index(["Site", "scenario-year"])
-    
-    FLH_transmission.loc[NTC.index] = transfers / NTC
-    FLH_transmission.round(2).reset_index().to_excel(writer, sheet_name='Full-load hours transmission', index=False)
-    
-def get_abatement(urbs_results):
-    """
-    description
-    """
-    simpleindex = pd.Index(scenario_years, name="scenario-year")
-    # Prepare dataframe of abatement
-    abatement = pd.DataFrame(index=simpleindex, columns=["Fix costs", "Variable costs", "Fuel costs", "Environmental costs",
-                                                    "Annualized inv costs", "Annualized inv costs (incl. past)", "Annualized inv costs (incl. past, till horizon)",
-                                                    "Annualized total costs", "Annualized total costs (incl. past)", "Annualized costs (incl. past, till horizon)",
-                                                    "CO2 emissions (Mt)"])
-
-    # Emissions
-    emissions = urbs_results["Emissions by fuel"].set_index(["Site"])
-    emissions = emissions.loc[dict_countries.keys()].reset_index()
-    emissions = emissions.drop(columns=["Site"]).set_index(["scenario-year"]).sum(axis=1).reset_index().groupby("scenario-year").sum()
-    
-    # System costs
-    costs = urbs_results["System costs"].set_index(["Site"])
-    costs = costs.loc[dict_countries.keys()].reset_index().drop(columns=["Site"]).groupby(["scenario-year"]).sum()
-    
-    # Fill Abatement sheet
-    abatement.loc[emissions.index, "CO2 emissions (Mt)"] = emissions[0]
-    abatement.loc[costs.index, ["Fix costs", "Variable costs", "Fuel costs", "Environmental costs", "Annualized inv costs", "Annualized inv costs (incl. past)", "Annualized inv costs (incl. past, till horizon)", "Annualized total costs", "Annualized total costs (incl. past)", "Annualized costs (incl. past, till horizon)"]] = costs / 10**6
-    
-    # Save results
-    abatement.dropna(inplace=True)
-    if "Abatement" in urbs_results.keys():
-        urbs_results["Abatement"].set_index(["scenario-year"], inplace=True)
-        try: # Update values in sheet
-            urbs_results["Abatement"].loc[abatement.index] = abatement.round(2)
-        except: # Append values in sheet
-            urbs_results["Abatement"] = urbs_results["Abatement"].append(abatement.round(2))
-    else: # Create sheet
-        urbs_results["Abatement"] = abatement.round(2)
-    # Sort index
-    urbs_results["Abatement"] = urbs_results["Abatement"].sort_index()
-    # Calculate total
-    urbs_results["Abatement"].loc["total"] = urbs_results["Abatement"].iloc[0]
-    for ind in range(1, len(urbs_results["Abatement"])-1):
-        n_years = urbs_results["Abatement"].iloc[ind].index - urbs_results["Abatement"].iloc[ind-1].index
-        urbs_results["Abatement"].loc["total"] = urbs_results["Abatement"].loc["total"] + urbs_results["Abatement"].iloc[ind] * n_years
-    
-    return urbs_results
+  
 
 def get_interface_LCA(urbs2lca_results, urbs_results, scen):
     """ description"""
     urbs2lca_results[scen] = 0
 
-    #urbs2lca_results.loc[("Energy produced in Tennant Creek", "GWh/a"), scen] = (urbs_results["Electricity generation"].loc[("Tennant Creek", 2030), "PV"] + urbs_results["Curtailment"].loc[("Tennant Creek", 2030), "PV"]) / 1000
     urbs2lca_results.loc[("Energy produced in Tennant Creek", "GWh/a"), scen] = (urbs_results["Electricity generation"].loc[("Tennant Creek", 2030), "PV"]) / 1000
     urbs2lca_results.loc[("Energy consumed in Australia", "GWh/a"), scen] = (urbs_results["Electricity"].loc[("total_AUS", 2030), "elec-demand"] - urbs_results["Electricity generation"].loc[("total_AUS", 2030), "Slack_clean"])/ 1000
     urbs2lca_results.loc[("Energy sent to Singapore (start of cable)", "GWh/a"), scen] = urbs_results["Transfers"].loc[("Darwin", 2030), "Singapore"] / df_data["transmission"].loc[(2030, "Darwin", "Singapore", "DC_CAB", "Elec"), "eff"] / 1000
@@ -1185,9 +1043,6 @@ for result_file in list_files:
     print(scen, year, ": Getting CO2 data")
     urbs_results = get_emissions_data(urbs_results)
     
-    print(scen, year, ": Getting marginal electricity generation data")
-    urbs_results = get_marginal_generation_data(urbs_results)
-    
     print(scen, year, ": Getting electricity prices")
     urbs_results = get_electricity_data(urbs_results, int(year))
     
@@ -1223,7 +1078,7 @@ for result_file in list_files:
     ### LCA ###
     if year == "2030":
         lca_path = os.path.abspath(os.path.join(result_folder, os.pardir, "URBS2LCA_" + version + ".csv"))
-        lca_path_Sri = os.path.abspath(os.path.join(result_folder, os.pardir, "URBS2LCA_" + version + "_Sri.csv"))
+        lca_path_EN = os.path.abspath(os.path.join(result_folder, os.pardir, "URBS2LCA_" + version + "_EN.csv"))
         lca_empty_path = os.path.abspath(os.path.join(result_folder, os.pardir, "Interface_empty.csv"))
         if os.path.exists(lca_path):
             # print("the file exists and will be updated")
@@ -1234,35 +1089,4 @@ for result_file in list_files:
         urbs2lca_results = get_interface_LCA(urbs2lca_results, urbs_results, scen)
         
         urbs2lca_results.to_csv(lca_path, index=False, decimal=",", sep=";")
-        urbs2lca_results.to_csv(lca_path_Sri, index=False, decimal=".", sep=",")
-    
-    
-# for result_file in list_files:
-    
-    # print("Getting NTC rents data")
-    # urbs_results = get_NTC_rents_data(urbs_results)
-    
-    # # Save results
-    # for sheet in list(urbs_results.keys()):
-        # if len(urbs_results[sheet]):
-            # urbs_results[sheet].to_excel(writer, sheet_name=sheet, index=True, header=True)
-        # else:
-            # print(sheet, "has been removed")
-            # urbs_results.pop(sheet)
-    # writer.save()
-    
-# for scen in ["base"]:#, "base+CO2", "baseCO2", "base+NTC"]:
-
-    # # print(scen, ": Getting FLH data")
-    # # get_FLH_data(reader, writer)
-    
-    # print(scen, ": Getting abatement data")
-    # urbs_results = get_abatement(urbs_results)
-    
-    # # Save results
-    # for sheet in list(urbs_results.keys()):
-        # if len(urbs_results[sheet]):
-            # urbs_results[sheet].to_excel(writer, sheet_name=sheet, index=True, header=True)
-        # else:
-            # urbs_results.pop(sheet)
-    # writer.save()
+        urbs2lca_results.to_csv(lca_path_EN, index=False, decimal=".", sep=",")

@@ -3,7 +3,7 @@ import shutil
 import urbs
 
 
-input_files = 'Sin-Aus-urbs_v6.4.xlsx'  # for single year file name, for intertemporal folder name
+input_files = 'Sin-Aus-urbs_v6.2.xlsx'  # for single year file name, for intertemporal folder name
 input_dir = os.path.join('Input', 'SunCable')
 input_path = os.path.join(input_dir, input_files)
 

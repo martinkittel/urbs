@@ -1,0 +1,111 @@
+
+Gurobi 9.0.2 (win64) logging started Sat Oct 10 15:51:11 2020
+
+Changed value of parameter logfile to result\v6.2-20201010T1221\scenario_2030_eff085_cab2000.log
+   Prev:   Default: 
+Gurobi Optimizer version 9.0.2 build v9.0.2rc0 (win64)
+Optimize a model with 1384150 rows, 884815 columns and 3912197 nonzeros
+Model fingerprint: 0xa65c743b
+Coefficient statistics:
+  Matrix range     [1e-07, 3e+05]
+  Objective range  [1e+00, 1e+00]
+  Bounds range     [0e+00, 0e+00]
+  RHS range        [2e-05, 3e+08]
+Warning: Model contains large matrix coefficient range
+         Consider reformulating model or setting NumericFocus parameter
+         to avoid numerical issues.
+
+Concurrent LP optimizer: primal simplex, dual simplex, and barrier
+Showing barrier log only...
+
+Presolve removed 1129315 rows and 656241 columns
+Presolve time: 3.51s
+Presolved: 254835 rows, 342440 columns, 891938 nonzeros
+
+Ordering time: 0.12s
+
+Barrier statistics:
+ Dense cols : 9
+ AA' NZ     : 8.194e+05
+ Factor NZ  : 4.461e+06 (roughly 300 MBytes of memory)
+ Factor Ops : 1.125e+08 (less than 1 second per iteration)
+ Threads    : 30
+
+                  Objective                Residual
+Iter       Primal          Dual         Primal    Dual     Compl     Time
+   0  -1.93475099e+16 -1.58516165e+15  5.80e+06 1.56e+04  2.32e+12     4s
+   1  -2.97202145e+15 -1.58855465e+15  8.83e+05 4.70e+06  7.65e+11     5s
+   2  -1.25597050e+15 -1.27887235e+15  3.71e+05 8.32e+05  2.14e+11     5s
+   3  -4.54114922e+14 -1.03391869e+15  1.31e+05 2.40e+05  7.22e+10     5s
+   4  -1.06893741e+14 -6.37690136e+14  2.84e+04 5.84e+04  1.67e+10     6s
+   5  -3.45975353e+13 -4.32174303e+14  9.20e+03 2.94e+04  7.01e+09     6s
+   6  -1.63170045e+13 -2.50228388e+14  4.56e+03 9.52e+03  2.79e+09     6s
+   7  -6.50492316e+12 -1.42998429e+14  1.95e+03 1.87e+03  8.91e+08     6s
+   8  -1.10085249e+12 -6.44076389e+13  4.63e+02 2.50e+02  1.95e+08     7s
+   9   5.19637131e+11 -8.04773465e+12  2.00e+00 2.56e+00  1.28e+07     7s
+  10   1.53509963e+11 -1.16430718e+12  1.63e-01 2.42e-01  1.92e+06     7s
+  11   7.40272327e+10 -3.72545487e+11  6.19e-02 7.45e-09  6.49e+05     8s
+  12   3.16464085e+10 -1.37383370e+11  2.28e-02 1.12e-08  2.45e+05     8s
+  13   2.07097452e+10 -6.29214664e+10  1.35e-02 1.12e-08  1.21e+05     8s
+  14   1.57953382e+10 -2.97512079e+10  9.05e-03 1.12e-08  6.61e+04     8s
+  15   1.59253072e+10 -2.57015730e+10  8.66e-03 1.12e-08  6.04e+04     9s
+  16   1.10428018e+10 -2.40784975e+09  4.23e-03 1.12e-08  1.96e+04     9s
+  17   7.98344336e+09  1.47148682e+09  1.68e-03 9.31e-09  9.45e+03     9s
+  18   7.00319775e+09  3.51205767e+09  7.92e-04 7.45e-09  5.06e+03     9s
+  19   6.76085845e+09  4.02775037e+09  5.93e-04 5.59e-09  3.96e+03    10s
+  20   6.61725784e+09  4.40483817e+09  4.74e-04 5.59e-09  3.20e+03    10s
+  21   6.49407816e+09  4.50560763e+09  3.73e-04 5.59e-09  2.88e+03    10s
+  22   6.43761049e+09  4.71811810e+09  3.26e-04 5.59e-09  2.49e+03    11s
+  23   6.35145719e+09  5.14278418e+09  2.55e-04 3.73e-09  1.75e+03    11s
+  24   6.26726932e+09  5.29548724e+09  1.85e-04 3.73e-09  1.41e+03    11s
+  25   6.17415457e+09  5.49446992e+09  1.14e-04 2.79e-09  9.82e+02    12s
+  26   6.11629323e+09  5.66353410e+09  6.94e-05 2.79e-09  6.54e+02    12s
+  27   6.08364045e+09  5.74828154e+09  4.68e-05 1.86e-09  4.85e+02    12s
+  28   6.06060138e+09  5.80468963e+09  3.12e-05 2.79e-09  3.70e+02    13s
+  29   6.05345594e+09  5.82635437e+09  2.65e-05 1.86e-09  3.28e+02    13s
+  30   6.04678115e+09  5.85281915e+09  2.22e-05 2.79e-09  2.80e+02    14s
+  31   6.03625802e+09  5.88174796e+09  1.56e-05 1.86e-09  2.23e+02    14s
+  32   6.02978740e+09  5.90489551e+09  1.16e-05 1.86e-09  1.80e+02    14s
+  33   6.02560467e+09  5.94005920e+09  9.01e-06 1.86e-09  1.24e+02    15s
+  34   6.02098003e+09  5.95623651e+09  6.30e-06 1.86e-09  9.35e+01    15s
+  35   6.01820089e+09  5.97338074e+09  4.71e-06 1.86e-09  6.47e+01    16s
+  36   6.01606727e+09  5.97952170e+09  3.54e-06 2.79e-09  5.28e+01    16s
+  37   6.01420622e+09  5.99407932e+09  2.54e-06 1.86e-09  2.91e+01    16s
+  38   6.01320829e+09  5.99602364e+09  2.02e-06 1.86e-09  2.48e+01    17s
+  39   6.01161956e+09  6.00034326e+09  1.17e-06 1.86e-09  1.63e+01    17s
+  40   6.01117843e+09  6.00419005e+09  9.46e-07 1.86e-09  1.01e+01    18s
+  41   6.01069734e+09  6.00523619e+09  6.97e-07 1.86e-09  7.89e+00    18s
+  42   6.01017006e+09  6.00709509e+09  4.20e-07 1.86e-09  4.44e+00    18s
+  43   6.00987844e+09  6.00771629e+09  2.77e-07 1.86e-09  3.12e+00    18s
+  44   6.00950426e+09  6.00880312e+09  1.81e-07 1.86e-09  1.01e+00    19s
+  45   6.00936316e+09  6.00912017e+09  1.43e-07 2.79e-09  3.51e-01    19s
+  46   6.00930847e+09  6.00916991e+09  2.79e-07 1.86e-09  2.00e-01    19s
+  47   6.00928247e+09  6.00927626e+09  8.77e-08 2.79e-09  8.97e-03    19s
+  48   6.00928165e+09  6.00928164e+09  1.64e-09 2.79e-09  1.08e-05    20s
+  49   6.00928165e+09  6.00928164e+09  4.67e-04 7.01e-08  1.08e-05    20s
+
+Barrier solved model in 49 iterations and 20.08 seconds
+Optimal objective 6.00928165e+09
+
+Crossover log...
+
+   74741 DPushes remaining with DInf 0.0000000e+00                20s
+       0 DPushes remaining with DInf 0.0000000e+00                23s
+Warning: Markowitz tolerance tightened to 0.5
+
+   66545 PPushes remaining with PInf 3.3691987e-03                23s
+   39459 PPushes remaining with PInf 1.2766526e-02                28s
+   24211 PPushes remaining with PInf 1.2761576e-02                31s
+    6040 PPushes remaining with PInf 1.2433301e-02                35s
+       0 PPushes remaining with PInf 0.0000000e+00                39s
+
+  Push phase complete: Pinf 0.0000000e+00, Dinf 2.0172256e+00     39s
+
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+   92935    6.0092816e+09   0.000000e+00   2.017226e+00     39s
+   92944    6.0092816e+09   0.000000e+00   0.000000e+00     41s
+
+Solved with barrier
+Solved in 92944 iterations and 41.26 seconds
+Optimal objective  6.009281650e+09
+Warning: unscaled primal violation = 0.000866974 and residual = 0.000866974
