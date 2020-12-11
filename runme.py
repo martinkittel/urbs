@@ -3,11 +3,11 @@ import shutil
 import urbs
 
 
-input_files = 'Sin-Aus-urbs_v6.2.xlsx'  # for single year file name, for intertemporal folder name
+input_files = 'SunCable.xlsx'  # for single year file name, for intertemporal folder name
 input_dir = os.path.join('Input', 'SunCable')
 input_path = os.path.join(input_dir, input_files)
 
-result_name = input_files.split("_")[1][:-5]
+result_name = 'SunCable'
 result_dir = urbs.prepare_result_directory(result_name)  # name + time stamp
 
 # copy input file to result directory
