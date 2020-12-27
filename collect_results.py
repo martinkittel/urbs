@@ -11,15 +11,14 @@ global dict_countries
 global dict_season
 
 # User preferences
-result_folder = os.path.join("result", "SunCable", "v6.2-20201010T1221")
-version = "v6.20"
+result_folder = os.path.join("result", "SunCable-20201227T0415")#SunCable-20201212T1056")
 scenario_years = [2019, 2030]
 stf_min = 2019
 
 def group_technologies(list_tech):
     grouped_tech = {}
     for elem in list_tech:
-        if elem in ["Shunt", "Slack_clean"]:
+        if elem == "Shunt":
             grouped_tech[elem] = elem
         elif elem == "Senoko_Energy_ST":
             grouped_tech[elem] = "Oil_ST"
@@ -45,8 +44,10 @@ def group_sites(list_sites):
     """
     grouped_sites = {}
     for elem in list_sites:
-        if elem != "Singapore":
+        if (elem not in ["Singapore", "Jambi"]):
             grouped_sites[elem] = "total_AUS"
+        elif elem == "Jambi":
+            grouped_sites[elem] = "total_IDN"
         else:
             grouped_sites[elem] = "total_SGP"
     return grouped_sites
@@ -135,8 +136,8 @@ def get_emissions_data(urbs_results):
     if "Emissions" in urbs_results.keys():
         urbs_results["Emissions"].set_index(["Site", "scenario-year"], inplace=True)
         urbs_results["Emissions by fuel"].set_index(["Site", "scenario-year"], inplace=True)
-        emissions.loc[urbs_results["Emissions"].index] = urbs_results["Emissions"]
-        emissions_by_fuel.loc[urbs_results["Emissions by fuel"].index] = urbs_results["Emissions by fuel"]
+        emissions.loc[urbs_results["Emissions"].index.intersection(emissions.index)] = urbs_results["Emissions"].loc[urbs_results["Emissions"].index.intersection(emissions.index)]
+        emissions_by_fuel.loc[urbs_results["Emissions by fuel"].index.intersection(emissions_by_fuel.index)] = urbs_results["Emissions by fuel"].loc[urbs_results["Emissions by fuel"].index.intersection(emissions_by_fuel.index)]
     
     co2 = df_result["e_pro_out"].unstack()['CO2'].reorder_levels(['sit', 'stf', 'pro', 't']).sort_index().fillna(0)
     co2 = add_weight(co2)
@@ -240,7 +241,7 @@ def get_electricity_data(urbs_results, year_built):
         urbs_results["Electricity"].set_index(["Site", "scenario-year"], inplace=True)
         electricity.loc[urbs_results["Electricity"].index.intersection(electricity.index)] = urbs_results["Electricity"]
         urbs_results["Hourly prices"].set_index(["Hour", "scenario-year"], inplace=True)
-        hourly_prices.loc[urbs_results["Hourly prices"].index.intersection(hourly_prices.index)] = urbs_results["Hourly prices"]
+        hourly_prices.loc[urbs_results["Hourly prices"].index.intersection(hourly_prices.index)] = urbs_results["Hourly prices"][hourly_prices.columns]
     
     # Get cost factor
     if year_built > stf_min:
@@ -387,9 +388,9 @@ def get_capacities_data(urbs_results):
         urbs_results["Installed capacities"].set_index(["Site", "scenario-year"], inplace=True)
         urbs_results["Added capacities"].set_index(["Site", "scenario-year"], inplace=True)
         urbs_results["Retired capacities"].set_index(["Site", "scenario-year"], inplace=True)
-        capacities_total.loc[urbs_results["Installed capacities"].index] = urbs_results["Installed capacities"][capacities_total.columns]
-        capacities_new.loc[urbs_results["Added capacities"].index] = urbs_results["Added capacities"][capacities_new.columns]
-        capacities_retired.loc[urbs_results["Retired capacities"].index] = urbs_results["Retired capacities"][capacities_retired.columns]
+        capacities_total.loc[urbs_results["Installed capacities"].index.intersection(capacities_total.index)] = urbs_results["Installed capacities"].loc[urbs_results["Installed capacities"].index.intersection(capacities_total.index), capacities_total.columns]
+        capacities_new.loc[urbs_results["Added capacities"].index.intersection(capacities_new.index)] = urbs_results["Added capacities"].loc[urbs_results["Added capacities"].index.intersection(capacities_new.index), capacities_new.columns]
+        capacities_retired.loc[urbs_results["Retired capacities"].index.intersection(capacities_retired.index)] = urbs_results["Retired capacities"].loc[urbs_results["Retired capacities"].index.intersection(capacities_retired.index), capacities_retired.columns]
     
     # New capacities
     cap_new = df_result["cap_pro_new"].reset_index().rename(columns={"stf": "scenario-year", "sit":"Site", "pro":"Process", "cap_pro_new":"inst-cap"})
@@ -972,25 +973,37 @@ def get_interface_LCA(urbs2lca_results, urbs_results, scen):
     """ description"""
     urbs2lca_results[scen] = 0
 
-    urbs2lca_results.loc[("Energy produced in Tennant Creek", "GWh/a"), scen] = (urbs_results["Electricity generation"].loc[("Tennant Creek", 2030), "PV"]) / 1000
-    urbs2lca_results.loc[("Energy consumed in Australia", "GWh/a"), scen] = (urbs_results["Electricity"].loc[("total_AUS", 2030), "elec-demand"] - urbs_results["Electricity generation"].loc[("total_AUS", 2030), "Slack_clean"])/ 1000
-    urbs2lca_results.loc[("Energy sent to Singapore (start of cable)", "GWh/a"), scen] = urbs_results["Transfers"].loc[("Darwin", 2030), "Singapore"] / df_data["transmission"].loc[(2030, "Darwin", "Singapore", "DC_CAB", "Elec"), "eff"] / 1000
-    urbs2lca_results.loc[("Energy consumed in Singapore", "GWh/a"), scen] = urbs_results["Transfers"].loc[("Darwin", 2030), "Singapore"] / 1000
-    urbs2lca_results.loc[("Energy demand in Singapore", "GWh/a"), scen] = urbs_results["Electricity"].loc[("total_SGP", 2030), "elec-demand"] / 1000
-    urbs2lca_results.loc[("Installed PV capacity (total)", "GW"), scen] = urbs_results["Installed capacities"].loc[("Tennant Creek", 2030), "PV"] / 1000
-    urbs2lca_results.loc[("Installed battery storage capacity (total)", "GWh"), scen] = urbs_results["Storage"].loc[("total_AUS", "Battery", 2030), "inst-cap-c"] / 1000
-    urbs2lca_results.loc[("Installed cable capacity (total)", "GW"), scen] = urbs_results["NTC"].loc[("total_AUS", 2030), "total_SGP"] / 1000
-    urbs2lca_results.loc[("Lifetime PV", "a"), scen] = df_data["process"].loc[(2030, "Tennant Creek", "Solar_PV"), "depreciation"]
-    urbs2lca_results.loc[("Lifetime battery", "a"), scen] = df_data["storage"].loc[(2030, "Tennant Creek", "Battery", "Elec"), "depreciation"]
-    urbs2lca_results.loc[("Lifetime cable", "a"), scen] = df_data["transmission"].loc[(2030, "Darwin", "Singapore", "DC_CAB", "Elec"), "depreciation"]
+    try: # Australia
+        urbs2lca_results.loc[("Energy produced abroad", "GWh/a"), scen] = urbs_results["Electricity generation"].loc[("Tennant Creek", 2030), "PV"] / 1000
+        urbs2lca_results.loc[("Energy sent to Singapore (start of cable)", "GWh/a"), scen] = urbs_results["Transfers"].loc[("Darwin", 2030), "Singapore"] / df_data["transmission"].loc[(2030, "Darwin", "Singapore", "DC_CAB", "Elec"), "eff"] / 1000
+        urbs2lca_results.loc[("Energy consumed in Singapore", "GWh/a"), scen] = urbs_results["Transfers"].loc[("Darwin", 2030), "Singapore"] / 1000
+        urbs2lca_results.loc[("Installed PV capacity (total)", "GW"), scen] = urbs_results["Installed capacities"].loc[("Tennant Creek", 2030), "PV"] / 1000
+        urbs2lca_results.loc[("Installed battery storage capacity (total)", "GWh"), scen] = urbs_results["Storage"].loc[("total_AUS", "Battery", 2030), "inst-cap-c"] / 1000
+        urbs2lca_results.loc[("Installed cable capacity (total)", "GW"), scen] = urbs_results["NTC"].loc[("total_AUS", 2030), "total_SGP"] / 1000
+        urbs2lca_results.loc[("Lifetime PV", "a"), scen] = df_data["process"].loc[(2030, "Tennant Creek", "Solar_PV"), "depreciation"]
+        urbs2lca_results.loc[("Lifetime battery", "a"), scen] = df_data["storage"].loc[(2030, "Darwin", "Battery", "Elec"), "depreciation"]
+        urbs2lca_results.loc[("Lifetime cable", "a"), scen] = df_data["transmission"].loc[(2030, "Darwin", "Singapore", "DC_CAB", "Elec"), "depreciation"]
     
+    except: # Indonesia
+        urbs2lca_results.loc[("Energy produced abroad", "GWh/a"), scen] = urbs_results["Electricity generation"].loc[("Jambi", 2030), "PV"] / 1000
+        urbs2lca_results.loc[("Energy sent to Singapore (start of cable)", "GWh/a"), scen] = urbs_results["Transfers"].loc[("Jambi", 2030), "Singapore"] / df_data["transmission"].loc[(2030, "Jambi", "Singapore", "DC_CAB", "Elec"), "eff"] / 1000
+        urbs2lca_results.loc[("Energy consumed in Singapore", "GWh/a"), scen] = urbs_results["Transfers"].loc[("Jambi", 2030), "Singapore"] / 1000
+        urbs2lca_results.loc[("Installed PV capacity (total)", "GW"), scen] = urbs_results["Installed capacities"].loc[("Jambi", 2030), "PV"] / 1000
+        urbs2lca_results.loc[("Installed battery storage capacity (total)", "GWh"), scen] = urbs_results["Storage"].loc[("total_IDN", "Battery", 2030), "inst-cap-c"] / 1000
+        urbs2lca_results.loc[("Installed cable capacity (total)", "GW"), scen] = urbs_results["NTC"].loc[("total_IDN", 2030), "total_SGP"] / 1000
+        urbs2lca_results.loc[("Lifetime PV", "a"), scen] = df_data["process"].loc[(2030, "Jambi", "Solar_PV"), "depreciation"]
+        urbs2lca_results.loc[("Lifetime battery", "a"), scen] = df_data["storage"].loc[(2030, "Jambi", "Battery", "Elec"), "depreciation"]
+        urbs2lca_results.loc[("Lifetime cable", "a"), scen] = df_data["transmission"].loc[(2030, "Jambi", "Singapore", "DC_CAB", "Elec"), "depreciation"]
+    
+    urbs2lca_results.loc[("Energy demand in Singapore", "GWh/a"), scen] = urbs_results["Electricity"].loc[("total_SGP", 2030), "elec-demand"] / 1000
     # Cable length is 3800, unless scenario changes that
-    urbs2lca_results.loc[("Cable length"), scen] = 3800
-    if scen[-2:] == "km":
-        urbs2lca_results.loc[("Cable length"), scen] = int(scen[-6:-2])
+    try:
+        urbs2lca_results.loc[("Cable length"), scen] = int(scen[-4:])
+    except: # Jambi
+        urbs2lca_results.loc[("Cable length"), scen] = 320
     
     # Allocation factor
-    urbs2lca_results.loc[("Allocation factor for Singapore", "dimensionless"), scen] = urbs2lca_results.loc[("Energy sent to Singapore (start of cable)", "GWh/a"), scen] / (urbs2lca_results.loc[("Energy sent to Singapore (start of cable)", "GWh/a"), scen] + urbs2lca_results.loc[("Energy consumed in Australia", "GWh/a"), scen])
+    urbs2lca_results.loc[("Allocation factor for Singapore", "dimensionless"), scen] = 1
     
     urbs2lca_results.loc[("PV capacity allocated to SG", "GW"), scen] = urbs2lca_results.loc[("Allocation factor for Singapore", "dimensionless"), scen] * urbs2lca_results.loc[("Installed PV capacity (total)", "GW"), scen]
     urbs2lca_results.loc[("Battery storage capacity allocated to SG", "GWh"), scen] = urbs2lca_results.loc[("Allocation factor for Singapore", "dimensionless"), scen] * urbs2lca_results.loc[("Installed battery storage capacity (total)", "GWh"), scen]
@@ -1011,9 +1024,9 @@ for result_file in list_files:
     
     # Read output file
     if year == "2019":
-        writer_path = os.path.abspath(os.path.join(result_folder, os.pardir, "URBS_" + version + "_" + year + ".xlsx"))
+        writer_path = os.path.abspath(os.path.join(result_folder, os.pardir, "URBS_" + year + ".xlsx"))
     else:
-        writer_path = os.path.abspath(os.path.join(result_folder, os.pardir, "URBS_" + version + "_" + scen + ".xlsx"))
+        writer_path = os.path.abspath(os.path.join(result_folder, os.pardir, "URBS_" + scen + ".xlsx"))
     writer = pd.ExcelWriter(writer_path, engine='openpyxl') 
     
     # Read in results
@@ -1031,12 +1044,10 @@ for result_file in list_files:
         # print("the file exists and will be updated")
         urbs_results = pd.read_excel(writer_path, sheet_name=None)
     else:
-        writer_path_initial = os.path.abspath(os.path.join(result_folder, os.pardir, "URBS_" + version + "_2019.xlsx"))
+        writer_path_initial = os.path.abspath(os.path.join(result_folder, os.pardir, "URBS_2019.xlsx"))
         if os.path.exists(writer_path_initial):
-            # print("the file for 2019 will be loaded, then saved somewhere else with data for 2030")
             urbs_results = pd.read_excel(writer_path_initial, sheet_name=None)
         else:
-            # print("file for 2019 does not exist, will be created")
             urbs_results = {}
     
     ### SHEETS ###
@@ -1077,8 +1088,8 @@ for result_file in list_files:
     
     ### LCA ###
     if year == "2030":
-        lca_path = os.path.abspath(os.path.join(result_folder, os.pardir, "URBS2LCA_" + version + ".csv"))
-        lca_path_EN = os.path.abspath(os.path.join(result_folder, os.pardir, "URBS2LCA_" + version + "_EN.csv"))
+        lca_path = os.path.abspath(os.path.join(result_folder, os.pardir, "URBS2LCA.csv"))
+        lca_path_EN = os.path.abspath(os.path.join(result_folder, os.pardir, "URBS2LCA_EN.csv"))
         lca_empty_path = os.path.abspath(os.path.join(result_folder, os.pardir, "Interface_empty.csv"))
         if os.path.exists(lca_path):
             # print("the file exists and will be updated")

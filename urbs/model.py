@@ -315,9 +315,9 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
         doc='total environmental commodity output <= commodity.max')
         
     # custom constraint
-    m.res_imports_from_AUS = pyomo.Constraint(
+    m.res_imports = pyomo.Constraint(
         m.stf,
-        rule = res_imports_from_AUS_rule,
+        rule = res_imports_rule,
         doc = 'imports from SunCable should cover 20% of demand in SG')
 
     # process
@@ -559,12 +559,15 @@ def res_env_total_rule(m, stf, sit, com, com_type):
 
 
 # custom constraint: imports to Singapore should cover 20% of demand
-def res_imports_from_AUS_rule(m, stf):
+def res_imports_rule(m, stf):
     # calculate sum of imports and total demand of SG
     imports = 0
     demand_SG = 0
     for tm in m.tm:
-        imports += m.e_tra_out[tm, stf, 'Darwin', 'Singapore', 'DC_CAB', 'Elec']
+        try:
+            imports += m.e_tra_out[tm, stf, 'Darwin', 'Singapore', 'DC_CAB', 'Elec']
+        except:
+            imports += m.e_tra_out[tm, stf, 'Jambi', 'Singapore', 'DC_CAB', 'Elec']
     demand_SG = m._data['demand']['Singapore']['Elec'].sum()
     return (imports >= m.global_prop_dict['value'][stf, 'Share of imports'] * demand_SG)
 
