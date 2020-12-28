@@ -999,8 +999,11 @@ def get_interface_LCA(urbs2lca_results, urbs_results, scen):
     # Cable length is 3800, unless scenario changes that
     try:
         urbs2lca_results.loc[("Cable length"), scen] = int(scen[-4:])
-    except: # Jambi
-        urbs2lca_results.loc[("Cable length"), scen] = 320
+    except: # Jambi or cab0
+        if scen[-4:] == "cab0":
+            urbs2lca_results.loc[("Cable length"), scen] = 0
+        else:
+            urbs2lca_results.loc[("Cable length"), scen] = 320
     
     # Allocation factor
     urbs2lca_results.loc[("Allocation factor for Singapore", "dimensionless"), scen] = 1
