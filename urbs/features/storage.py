@@ -201,7 +201,6 @@ def def_storage_power_rule(m, stf, sit, sto, com):
     return cap_sto_p
 
 
-
 # storage input <= storage power
 def res_storage_input_by_power_rule(m, t, stf, sit, sto, com):
     return (m.e_sto_in[t, stf, sit, sto, com] <= m.dt *
@@ -261,9 +260,10 @@ def def_cap_credit_storage(m, stf, sit, com):
     return cap_credit
 
 
+
 # storage balance
 def storage_balance(m, tm, stf, sit, com):
-    """callesd in commodity balance
+    """called in commodity balance
     For a given commodity co and timestep tm, calculate the balance of
     storage input and output """
 

@@ -89,11 +89,12 @@ def run_scenario(input_files, Solver, timesteps, scenario, result_dir, dt,
     data = read_input(input_files, year)
     data = scenario(data)
     validate_input(data)
+    validate_dc_objective(data, objective)
 
     # create model
     prob = create_model(data, dt, timesteps, objective)
     prob_filename = os.path.join(result_dir, 'model.lp')
-    #prob.write(prob_filename, io_options={'symbolic_solver_labels':True})
+    # prob.write(prob_filename, io_options={'symbolic_solver_labels':True})
     # prob.write('model.lp', io_options={'symbolic_solver_labels':True})
 
     # refresh time stamp string and create filename for logfile

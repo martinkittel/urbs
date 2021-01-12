@@ -3,11 +3,11 @@ import shutil
 import urbs
 
 
-input_files = 'ASEAN_Mekong_provinces_2016.xlsx'  # for single year file name, for intertemporal folder name
-input_dir = os.path.join('Input', 'Mekong')
+input_files = 'SunCable.xlsx'  # for single year file name, for intertemporal folder name
+input_dir = 'Input'
 input_path = os.path.join(input_dir, input_files)
 
-result_name = 'Run'
+result_name = 'SunCable'
 result_dir = urbs.prepare_result_directory(result_name)  # name + time stamp
 
 # copy input file to result directory
@@ -52,9 +52,15 @@ for country, color in my_colors.items():
     urbs.COLORS[country] = color
 
 # select scenarios to be run
-scenarios = [
-             urbs.scenario_base
-            ]
+scenarios = [urbs.scenario_2019,
+             # alternative location
+             urbs.scenario_2030_jambi,
+             ]
+
+for eff in range(-30, 31, 10):
+    for cab in [3800, 0, 1000, 2000, 3000, 4000, 5000]:
+        scenarios.append(urbs.scenario_2030(eff, cab).customfun)
+
 
 for scenario in scenarios:
     prob = urbs.run_scenario(input_path, solver, timesteps, scenario,

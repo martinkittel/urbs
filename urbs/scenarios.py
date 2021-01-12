@@ -1,71 +1,115 @@
 import pandas as pd
+import numpy as np
 
 # SCENARIO GENERATORS
 # In this script a variety of scenario generator functions are defined to
 # facilitate scenario definitions.
 
 
-def scenario_base(data):
+def scenario_2019(data):
     # do nothing
     return data
     
-def scenario_20pc_cheaper_lines(data):
-    # change maximum installable capacity
+    
+def scenario_2030_base(data):
+    # change support timeframe
+    for sheet in data.keys():
+        df = data[sheet]
+        df_index = df.index.names
+        df.reset_index(inplace=True)
+        df['support_timeframe'] = 2030
+        try:
+            df.set_index(df_index, inplace=True)
+        except:
+            continue
+            
+    # change minimum share of imports
+    prop = data['global_prop']
+    prop.loc[(2030, 'Share of imports'), 'value'] = 0.2
+    
+    # change maximum installable capacity of PV
+    pro = data['process']
+    pro.loc[(2030, 'Tennant Creek', 'Solar_PV'), 'cap-up'] = np.inf
+    pro.loc[(2030, 'Jambi', 'Solar_PV'), 'cap-up'] = np.inf
+    
+    # change maximum installable capacity of transmission lines
     tra = data['transmission']
-    tra['inv-cost'] *= 0.8
-    tra['fix-cost'] *= 0.8
+    tra.loc[(2030, slice(None), slice(None), slice(None), 'Elec'), 'cap-up'] = np.inf
+    
+    # change ramping limit
+    tra.loc[(2030, slice(None), 'Singapore', 'DC_CAB', 'Elec'), 'ramp-arrival'] /= 1.02**(2030-2019)
+    
+    # change maximum installable capacity of batteries
+    sto = data['storage']
+    sto['cap-up-p'] = np.inf
+    sto['cap-up-c'] = np.inf
+
+    # increase demand by 2% yearly
+    dem = data['demand']
+    dem *= 1.02**(2030-2019)
+    
+    return data
+     
+
+def scenario_2030_australia(data):
+    data = scenario_2030_base(data)
+    
+    # Delete Jambi
+    data['site'].drop('Jambi', level = 'Name', inplace = True)
+    data['commodity'].drop('Jambi', level = 'Site', inplace = True)
+    data['process'].drop('Jambi', level = 'Site', inplace = True)
+    data['transmission'].drop('Jambi', level = 'Site In', inplace = True)
+    data['storage'].drop('Jambi', level = 'Site', inplace = True)
+    data['demand'].drop('Jambi', axis = 1, level = 0, inplace = True)
+    data['supim'].drop('Jambi', axis = 1, level = 0, inplace = True)
+    
     return data
     
-def scenario_50pc_cheaper_lines(data):
-    # change maximum installable capacity
-    tra = data['transmission']
-    tra['inv-cost'] *= 0.5
-    tra['fix-cost'] *= 0.5
+    
+def scenario_2030_jambi(data):
+    data = scenario_2030_base(data)
+    
+    # Delete Australia
+    data['site'].drop(['Darwin', 'Tennant Creek'], level = 'Name', inplace = True)
+    data['commodity'].drop(['Darwin', 'Tennant Creek'], level = 'Site', inplace = True)
+    data['process'].drop('Tennant Creek', level = 'Site', inplace = True)
+    data['transmission'].drop(['Darwin', 'Tennant Creek'], level = 'Site In', inplace = True)
+    data['storage'].drop('Darwin', level = 'Site', inplace = True)
+    data['demand'].drop(['Darwin', 'Tennant Creek'], axis = 1, level = 0, inplace = True)
+    data['supim'].drop('Tennant Creek', axis = 1, level = 0, inplace = True)
+        
     return data
 
 
-def scenario_stock_prices(data):
-    # change stock commodity prices
-    co = data['commodity']
-    stock_commodities_only = (co.index.get_level_values('Type') == 'Stock')
-    co.loc[stock_commodities_only, 'price'] *= 1.5
-    return data
-
-
-def scenario_co2_limit(data):
-    # change global CO2 limit
-    global_prop = data['global_prop']
-    for stf in global_prop.index.levels[0].tolist():
-        global_prop.loc[(stf, 'CO2 limit'), 'value'] *= 0.05
-    return data
-
-
-def scenario_co2_tax_mid(data):
-    # change CO2 price in Mid
-    co = data['commodity']
-    for stf in data['global_prop'].index.levels[0].tolist():
-        co.loc[(stf, 'Mid', 'CO2', 'Env'), 'price'] = 50
-    return data
-
-
-def scenario_north_process_caps(data):
-    # change maximum installable capacity
-    pro = data['process']
-    for stf in data['global_prop'].index.levels[0].tolist():
-        pro.loc[(stf, 'North', 'Hydro plant'), 'cap-up'] *= 0.5
-        pro.loc[(stf, 'North', 'Biomass plant'), 'cap-up'] *= 0.25
-    return data
-
-
-def scenario_no_dsm(data):
-    # empty the DSM dataframe completely
-    data['dsm'] = pd.DataFrame()
-    return data
-
-
-def scenario_all_together(data):
-    # combine all other scenarios
-    data = scenario_stock_prices(data)
-    data = scenario_co2_limit(data)
-    data = scenario_north_process_caps(data)
-    return data
+class scenario_2030:
+    def __init__(self, eff, cab):
+        self.eff = eff
+        self.cab = cab
+        if self.eff >= 0:
+            self.newname  = 'scenario_2030_p' + str(eff) + '_cab' + str(cab)
+        else:
+            self.newname  = 'scenario_2030_m' + str(-eff) + '_cab' + str(cab)
+    
+    def __getattr__(self, name):
+        def customfun(data):
+            data = scenario_2030_australia(data)
+            
+            # change efficiency of solar system in Australia
+            pro = data['process']
+            pro.loc[(2030, 'Tennant Creek', 'Solar_PV'), 'reliability'] *= (1 + self.eff/100)
+            
+            # change length of cable
+            tra = data['transmission']
+            tra.loc[(2030, 'Darwin', 'Singapore', 'DC_CAB', 'Elec'), 'eff'] = 0.95**(self.cab/1000)
+            if self.cab == 0:
+                tra.loc[(2030, 'Darwin', 'Singapore', 'DC_CAB', 'Elec'), 'inv-cost'] = 0
+            else:
+                tra.loc[(2030, 'Darwin', 'Singapore', 'DC_CAB', 'Elec'), 'inv-cost'] = (160000 + 1152 * self.cab) * 1.1
+            tra.loc[(2030, 'Darwin', 'Singapore', 'DC_CAB', 'Elec'), 'fix-cost'] = 21 * self.cab * 1.1
+            
+            return data
+            
+        customfun.__name__ = self.newname
+        #self.customfun.__qualname__ = __class__.__qualname__ + '.' + self.newname
+        
+        return customfun

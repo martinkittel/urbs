@@ -1,7 +1,7 @@
 *~
 *.pyc
 .idea/*
-result/*
-results/*
+result/Mekong/*
+result/SunCable/v6.2-20201010T1221/*
 doc/_build/*
-Input/*
+Input/Mekong/*

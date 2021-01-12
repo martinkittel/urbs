@@ -271,7 +271,10 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
     # Add additional features
     # called features are declared in distinct files in features folder
     if m.mode['tra']:
-        m = add_transmission(m)
+        if m.mode['dpf']:
+            m = add_transmission_dc(m)
+        else:
+            m = add_transmission(m)
     if m.mode['sto']:
         m = add_storage(m)
     if m.mode['dsm']:
@@ -310,6 +313,12 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
         m.com_tuples,
         rule=res_env_total_rule,
         doc='total environmental commodity output <= commodity.max')
+        
+    # custom constraint
+    m.res_imports = pyomo.Constraint(
+        m.stf,
+        rule = res_imports_rule,
+        doc = 'imports from SunCable should cover 20% of demand in SG')
 
     # process
     m.def_process_input = pyomo.Constraint(
@@ -366,9 +375,6 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
             ' cap_pro * min_fraction * (r - R) / (1 - min_fraction)'
             ' + tau_pro * (R - min_fraction * r) / (1 - min_fraction)')
 
-
-
-
     # if m.mode['int']:
         # m.res_global_co2_limit = pyomo.Constraint(
             # m.stf,
@@ -400,12 +406,12 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
             m.stf,
             rule=res_global_co2_limit_rule,
             doc='total co2 commodity output <= Global CO2 limit')
-            
+
         if m.mode['int']:
             m.res_global_co2_budget = pyomo.Constraint(
                 rule=res_global_co2_budget_rule,
                 doc='total co2 commodity output <= global.prop CO2 budget')
-            
+
             m.res_global_cost_limit = pyomo.Constraint(
                 m.stf,
                 rule=res_global_cost_limit_rule,
@@ -431,7 +437,7 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
                 m.stf,
                 rule=res_global_co2_limit_rule,
                 doc='total co2 commodity output <= Global CO2 limit')
-                
+
         m.objective_function = pyomo.Objective(
             rule=co2_rule,
             sense=pyomo.minimize,
@@ -551,6 +557,19 @@ def res_env_total_rule(m, stf, sit, com, com_type):
         return (env_output_sum <=
                 m.commodity_dict['max'][(stf, sit, com, com_type)])
 
+
+# custom constraint: imports to Singapore should cover 20% of demand
+def res_imports_rule(m, stf):
+    # calculate sum of imports and total demand of SG
+    imports = 0
+    demand_SG = 0
+    for tm in m.tm:
+        try:
+            imports += m.e_tra_out[tm, stf, 'Darwin', 'Singapore', 'DC_CAB', 'Elec']
+        except:
+            imports += m.e_tra_out[tm, stf, 'Jambi', 'Singapore', 'DC_CAB', 'Elec']
+    demand_SG = m._data['demand']['Singapore']['Elec'].sum()
+    return (imports >= m.global_prop_dict['value'][stf, 'Share of imports'] * demand_SG)
 
 # process
 
@@ -691,7 +710,7 @@ def def_peak_demand(m, stf, sit, com):
     
 # sum of cap-credit >= peak demand
 def res_capacity_credit_rule(m, stf, sit, com):
-    if stf == 2015:
+    if stf == 2019:
         return pyomo.Constraint.Skip
     else:
         cap_credit = 0
