@@ -5,6 +5,7 @@ Energy demand in Singapore;GWh/a
 Installed PV capacity (total);GW
 Installed battery storage capacity (total);GWh
 Installed cable capacity (total);GW
+System LCOE;$/MWh
 Cable length;km
 Allocation factor for Singapore;dimensionless
 PV capacity allocated to SG;GW

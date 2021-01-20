@@ -979,6 +979,7 @@ def get_interface_LCA(urbs2lca_results, urbs_results, scen):
         urbs2lca_results.loc[("Installed PV capacity (total)", "GW"), scen] = urbs_results["Installed capacities"].loc[("Tennant Creek", 2030), "PV"] / 1000
         urbs2lca_results.loc[("Installed battery storage capacity (total)", "GWh"), scen] = urbs_results["Storage"].loc[("total_AUS", "Battery", 2030), "inst-cap-c"] / 1000
         urbs2lca_results.loc[("Installed cable capacity (total)", "GW"), scen] = urbs_results["NTC"].loc[("total_AUS", 2030), "total_SGP"] / 1000
+        urbs2lca_results.loc[("System LCOE", "$/MWh"), scen] = (urbs_results["System costs"].loc[("total_AUS", 2030), "Annualized total costs"] + urbs_results["System costs"].loc[("total_SGP", 2030), "Annualized total costs"]) / urbs_results["Electricity"].loc[("total_SGP", 2030), "elec-demand"]
         urbs2lca_results.loc[("Lifetime PV", "a"), scen] = df_data["process"].loc[(2030, "Tennant Creek", "Solar_PV"), "depreciation"]
         urbs2lca_results.loc[("Lifetime battery", "a"), scen] = df_data["storage"].loc[(2030, "Darwin", "Battery", "Elec"), "depreciation"]
         urbs2lca_results.loc[("Lifetime cable", "a"), scen] = df_data["transmission"].loc[(2030, "Darwin", "Singapore", "DC_CAB", "Elec"), "depreciation"]
@@ -990,6 +991,7 @@ def get_interface_LCA(urbs2lca_results, urbs_results, scen):
         urbs2lca_results.loc[("Installed PV capacity (total)", "GW"), scen] = urbs_results["Installed capacities"].loc[("Jambi", 2030), "PV"] / 1000
         urbs2lca_results.loc[("Installed battery storage capacity (total)", "GWh"), scen] = urbs_results["Storage"].loc[("total_IDN", "Battery", 2030), "inst-cap-c"] / 1000
         urbs2lca_results.loc[("Installed cable capacity (total)", "GW"), scen] = urbs_results["NTC"].loc[("total_IDN", 2030), "total_SGP"] / 1000
+        urbs2lca_results.loc[("System LCOE", "$/MWh"), scen] = (urbs_results["System costs"].loc[("total_IDN", 2030), "Annualized total costs"] + urbs_results["System costs"].loc[("total_SGP", 2030), "Annualized total costs"]) / urbs_results["Electricity"].loc[("total_SGP", 2030), "elec-demand"]
         urbs2lca_results.loc[("Lifetime PV", "a"), scen] = df_data["process"].loc[(2030, "Jambi", "Solar_PV"), "depreciation"]
         urbs2lca_results.loc[("Lifetime battery", "a"), scen] = df_data["storage"].loc[(2030, "Jambi", "Battery", "Elec"), "depreciation"]
         urbs2lca_results.loc[("Lifetime cable", "a"), scen] = df_data["transmission"].loc[(2030, "Jambi", "Singapore", "DC_CAB", "Elec"), "depreciation"]
@@ -1044,11 +1046,11 @@ for result_file in list_files:
     
     if os.path.exists(writer_path):
         # print("the file exists and will be updated")
-        urbs_results = pd.read_excel(writer_path, sheet_name=None)
+        urbs_results = pd.read_excel(writer_path, sheet_name=None, engine="openpyxl")
     else:
         writer_path_initial = os.path.abspath(os.path.join(result_folder, os.pardir, "URBS_2019.xlsx"))
         if os.path.exists(writer_path_initial):
-            urbs_results = pd.read_excel(writer_path_initial, sheet_name=None)
+            urbs_results = pd.read_excel(writer_path_initial, sheet_name=None, engine="openpyxl")
         else:
             urbs_results = {}
     
