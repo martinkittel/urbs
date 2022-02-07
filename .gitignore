@@ -5,3 +5,6 @@ result/*
 results/*
 doc/_build/*
 teaching/.ipynb_checkpoints
+teaching/01*
+teaching/02*
+teaching/03*
