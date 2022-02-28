@@ -1,6 +1,6 @@
 \* Source Pyomo model name=Example1 *\
 
-min 
+max 
 OBJ:
 +25 s(t1_Biomass)
 +50 s(t1_Gas)
@@ -55,30 +55,30 @@ c_u_ConstraintBiomassCap5_:
 +1 s(t5_Biomass)
 <= 30
 
-c_l_ConstraintDem1_:
+c_e_ConstraintDem1_:
 +1 s(t1_Biomass)
 +1 s(t1_Gas)
->= 60
+= 60
 
-c_l_ConstraintDem2_:
+c_e_ConstraintDem2_:
 +1 s(t2_Biomass)
 +1 s(t2_Gas)
->= 100
+= 100
 
-c_l_ConstraintDem3_:
+c_e_ConstraintDem3_:
 +1 s(t3_Biomass)
 +1 s(t3_Gas)
->= 120
+= 120
 
-c_l_ConstraintDem4_:
+c_e_ConstraintDem4_:
 +1 s(t4_Biomass)
 +1 s(t4_Gas)
->= 80
+= 80
 
-c_l_ConstraintDem5_:
+c_e_ConstraintDem5_:
 +1 s(t5_Biomass)
 +1 s(t5_Gas)
->= 30
+= 30
 
 c_e_ONE_VAR_CONSTANT: 
 ONE_VAR_CONSTANT = 1.0

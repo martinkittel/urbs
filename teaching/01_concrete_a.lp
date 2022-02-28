@@ -1,6 +1,6 @@
 \* Source Pyomo model name=Example1 *\
 
-min 
+max 
 x11:
 +25 x1
 +50 x10
@@ -55,30 +55,30 @@ c_u_x21_:
 +1 x9
 <= 30
 
-c_l_x22_:
+c_e_x22_:
 +1 x1
 +1 x2
->= 60
+= 60
 
-c_l_x23_:
+c_e_x23_:
 +1 x3
 +1 x4
->= 100
+= 100
 
-c_l_x24_:
+c_e_x24_:
 +1 x5
 +1 x6
->= 120
+= 120
 
-c_l_x25_:
+c_e_x25_:
 +1 x7
 +1 x8
->= 80
+= 80
 
-c_l_x26_:
+c_e_x26_:
 +1 x10
 +1 x9
->= 30
+= 30
 
 c_e_ONE_VAR_CONSTANT: 
 ONE_VAR_CONSTANT = 1.0
